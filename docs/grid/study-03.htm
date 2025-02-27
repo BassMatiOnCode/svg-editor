@@ -1,0 +1,133 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-16" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-16" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<!--
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<cript type="module" src="/inc/webcat/page-structure/demo-page.js" ></cript>
+-->
+
+<style id="styleTheDocumet">
+#theDocument { border : 1px solid silver }
+input { width : 3rch }
+input[type="number"] { width : 5rch }
+#propertyPanel > div { display : none }
+#propertyPanel.active > div { display : inline-block }
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Grid" />
+<meta name="tags" content="project, SVG, editor, create, element, study, construction, grid, non-cartesian" />
+<title>Non-Cartesian Grid (Projects > SVG Editor > Grid)</title>
+<meta name="description" content="This study demonstrates how to create and maintain SVG slanted grid lines" />
+
+</head><body>
+
+<!--
+To define the grid, we need two vectors, defined by lines.
+1. Draw a line to 
+-->
+
+<div class="hide-if-hosted">
+<h1>Study: Non-Cartesian Drawing Grid</h1>
+<p>Creating the grid lines</p>
+</div>
+
+<svg id="theDocument" viewBox="-150,-150,300,300" width="300" height="300" style="touch-action:none">
+<g id="grid" stroke="black" stroke-width="1">
+</g>
+</svg>
+
+<div id="propertyPanel"><button id="createGridDialog">Grid</button> <div>
+<label>ox: <input id="cx" type="text" size="4" value="0" /></label> 
+<label>dx: <input id="dx" type="number" size="4" value="50" /></label> 
+<label>φx: <input id="ax" type="number" size="4" value="50" /></label> 
+<label>oy: <input id="cy" type="text" size="4" value="0" /></label> 
+<label>dy: <input id="dy" type="number" size="4" value="50" /></label> 
+<label>φy: <input id="ay" type="number" size="4" value="50" /></label> 
+<button id="createGrid">Create</button> 
+<button id="closeDialog">Close</button>
+</div></div>
+
+<script id="scriptCreateDrawingGrid" type="module">
+for ( const o of propertyPanel.querySelectorAll( "input" )) {
+	o.addEventListener( "focus" , evt => { o.setAttribute( "type" , "number" ) } ) ;
+	o.addEventListener( "blur" , evt => { o.setAttribute( "type" , "text" ) } ) ;
+	}
+// get document extensions
+const [ documentLeft, documentTop, documentRight, documentBottom ] = (( ) => {
+	let [ left, top, width, height ] = theDocument.getAttribute( "viewBox" ).split( "," );
+	left = + left ;
+	top = + top ;
+	return [ left, top, + width + left, + height + top ] ;
+	} ) ( ) ;
+function createGridLine( classname, direction, position, min, max, container ) {
+	const orthogonal = direction === "x" ? "y" : "x" ;
+	const line = document.createElementNS( theDocument.namespaceURI, "line" );
+	line.classList.add( classname, direction );
+	line.setAttribute( direction + "1" , min );
+	line.setAttribute( direction + "2" , max );
+	line.setAttribute( orthogonal + "1" , position );
+	line.setAttribute( orthogonal + "2" , position );
+	container.append( line ) ;
+	return line;
+	}
+function createGridLines( classname, direction, current, delta, limit, min, max, container ) {
+	current += delta ;
+	const sign = Math.sign( delta );
+	const orthogonal = direction === "x" ? "y" : "x" ;
+	while ( sign * current < sign * limit ) {
+		createGridLine( classname, direction, current, min, max, container );
+		current += delta ;
+		}
+	}
+function setupGridCore ( ) {
+	// Replace old grid
+	const newGrid = document.createElementNS( theDocument.namespaceURI, "g" );
+	grid.replaceWith( newGrid );
+	globalThis.grid = newGrid;
+	newGrid.setAttribute( "stroke" , "silver" );
+	newGrid.setAttribute( "stroke-width" , "1" );
+	// create horizontal grid lines
+	let line = createGridLine( "origin", "x", + cy.value , documentLeft, documentRight, newGrid );
+	line.setAttribute( "stroke" , "grey" );
+	createGridLines( "gridline", "x", + cy.value , - dy.value, documentTop, documentLeft, documentRight, newGrid );
+	createGridLines( "gridline", "x", + cy.value , + dy.value, documentBottom, documentLeft, documentRight, newGrid );
+	// create vertical grid lines
+	line = createGridLine( "origin", "y", + cx.value , documentTop, documentBottom, newGrid );
+	line.setAttribute( "stroke" , "grey" );
+	createGridLines( "gridline", "y", + cx.value , - dx.value, documentLeft, documentTop, documentBottom, newGrid );
+	createGridLines( "gridline", "y", + cx.value , + dx.value, documentRight, documentTop, documentBottom, newGrid );
+	}
+function setupGrid ( evt ) {
+	// set the origin coordinates
+	let point = theDocument.createSVGPoint( );
+	point.x = evt.clientX;
+	point.y = evt.clientY;
+	point = point.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	cx.value = Math.round( point.x );
+	cy.value = Math.round( point.y );
+	setupGridCore( );
+	}
+createGridDialog.addEventListener( "click" , evt => {
+	evt.preventDefault( );
+	evt.stopPropagation( );
+	propertyPanel.classList.add( "active" );
+	theDocument.addEventListener( "click" , setupGrid ) ;
+	} ) ;
+createGrid.addEventListener( "click" , ( ) => {
+	setupGridCore( );
+	} ) ;
+closeDialog.addEventListener( "click" , ( ) => {
+	propertyPanel.classList.remove( "active" );
+	theDocument.removeEventListener( "click" , setupGrid ) ;
+	} ) ;
+</script>
+</body></html>

@@ -1,0 +1,814 @@
+﻿<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-12-09" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-23" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-23" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/tutorial-page.css" />
+<script type="module" src="/inc/webcat/page-structure/tutorial-page.js" ></script>
+ 
+<meta name="categories" content="Projects > SVG Editor > Grid" />
+<meta name="tags" content="project, SVG, editor, documentation, grid" />
+<meta name="description" content="" />
+
+<title>Snap to Geometry (Projects > SVG Editor > Snap and Glue)</title>
+
+</head><body>
+
+<h1>Snap to Geometry</h1><p class="subtitle">Magnetic points and lines serve as drawing aid</p>
+
+<h2 cbc>Introduction</h2><div>
+
+<p>A rectangle has 9 snap points: four corners, the four middle-points of the sides, and the center point, the center of weight. Additionally, the four perimeter lines can attract the pointer.</p>
+
+<p>Points are set in mousedown event handlers. If a snap function is active (snap to grid, lines, points), a secondary pointer is shown and positioned according to the "magnetic" influence of nearby points and lines.</p>
+
+<h3 cbc>Finding Nearby Objects</h3><div>
+
+<p>There are several functions to be used for the purpose:</p>
+
+<p>A first approach uses <tt>pointerenter</tt> and <tt>pointerleave</tt> events to maintain a list of elements the pointer is over.</p>
+
+<!--h3--Finding Nearby Objects--></div>
+
+<!--h2--Introduction--></div>
+
+<h2 cbc>Studies</h2><div>
+
+<h3 cbc>Study 1: Pointer Enter and Leave Events</h3><div>
+
+<p>The SVG document defines a rectangle object:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;svg id="theDocument" viewBox="-150,-150,300,300" width="300" height="300" style="touch-action:none"&gt;
+&lt;rect id="r-001" x="-20" y="-20" width="40" height="40" stroke="black" stroke-width="1" fill="white" &gt;&lt;/rect&gt;
+&lt;/svg&gt;
+</pre></figure>
+
+<p>The following code is attached to the SVG root element:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+theDocument.addEventListener( "pointerenter" , evt => {
+	console.debug( "Pointer enter", evt.target.id );
+	} ) ;
+theDocument.addEventListener( "pointerleave" , evt => {
+	console.debug( "Pointer leave", evt.target.id );
+	} ) ;
+</pre></figure>
+
+<p>Findings: The SVG element reports pointer events, the rectangle does not.</p>
+
+<figure class="demo"><figcaption>Pointer enter and leave events (<a href="study-01.htm" target="_blank">study 1</a>)</figcaption>
+<iframe class="content-height-observed" src="study-01.htm"></iframe>
+</figure>
+
+<!--h3--Study 1: Pointer Enter and Leave Events--></div>
+
+<h3 cbc>Study 2: Pointer Enter and Leave Events</h3><div>
+
+<p>We added a circle to the scene:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;rect id="r-001" x="-20" y="-20" width="40" height="40" stroke="black" stroke-width="1" fill="white" &gt;&lt;/rect&gt;
+&lt;circle cx="15" cy="15" r="25" id="c-001" stroke="black" stroke-width="1" fill="white" &gt;&lt;/circle&gt;
+</pre></figure>
+
+<p>And added event handlers to every element in the document:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+for ( const o of theDocument.querySelectorAll( "*" )) {
+	o.addEventListener( "pointerenter" , evt => {
+		console.debug( "Pointer enter", evt.target.id );
+		} ) ;
+	o.addEventListener( "pointerleave" , evt => {
+		console.debug( "Pointer leave", evt.target.id );
+		} ) ;
+	}
+</pre></figure>
+
+<p>This works well, a pointerleave event is fired if the pointer moves from the rectangle into the circle, and vice versa. Additionally, the events fire as soon as the pointer enters or leaves the actual shape perimeter. For a circle, this is the circumference line.</p>
+
+<figure class="demo"><figcaption>Pointer enter and leave events (<a href="study-02.htm" target="_blank">study 2</a>)</figcaption>
+<iframe class="content-height-observed" src="study-02.htm"></iframe>
+</figure>
+
+<p>The performance appears quite good, so this is the method to go for.</p>
+
+<!--h3--Study 2: Pointer Enter and Leave Events--></div>
+
+<h3 cbc>Study 3: Detecting Lines Under the Pointer</h3><div>
+
+<p>In this study, the rectangle is moved to the left by setting its x coordinate appropriately, and the circle is move right by applying a <tt>transform</tt> attribute:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;rect id="r-001" x="-50" y="-20" width="40" height="40" stroke="black" stroke-width="1" fill="white" &gt;&lt;/rect&gt;
+&lt;circle r="25" id="c-001" stroke="black" stroke-width="1" fill="white" transform="translate(25,15)" &gt;&lt;/circle&gt;
+</pre></figure>
+
+<p>If you click on the center of the rectange, the script reports "-30" for the x coordinate. This is okay, because the rectangle lives in the coordinate system of the SVG root element.</p>
+
+<p>If you click on the center of the circle, the script reports "0" for the x coordinate. This is due to the fact that the object has been translated to that point and thereby got its own local coordinate system.</p>
+
+<p>To detect lines under the pointer, we use the <tt>pointerdown</tt> event:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+o.addEventListener( "pointerdown", evt => {
+	let point = theDocument.createSVGPoint( );
+	point.x = evt.clientX;
+	point.y = evt.clientY;
+	point = point.matrixTransform( evt.target.getScreenCTM( ).inverse( ));
+	point.x = Math.round( point.x ) ;
+	point.y = Math.round( point.y ) ;
+	const onStroke = evt.target.isPointInStroke( point );
+	console.debug( "Pointer down", evt.target.id, point.x, point.y, onStroke );
+	} ) ;
+	}
+</pre></figure>
+
+<p>The code above converts the CSS coordinate to the local coordinates of the event target object. A stroke hit test is performed with the <tt>isPointInStroke()</tt> function. This works well for both elements, the rectangle, which lives in the local coordinate system of the SVG root element, and the circle, which introduces its own local coordinate system.</p>
+
+<p>If you hit the stroke line, a "true" is printed in the console message.</p>
+
+<p>Note that a transparent fill color will cause a pointerleave event as soon as the pointer leaves the stroke line &ndash; even if the pointer is then inside the object boundaries. Check it with the circle element.</p>
+
+<figure class="demo"><figcaption>Pointer enter and leave events (<a href="study-03.htm" target="_blank">study 3</a>)</figcaption>
+<iframe class="content-height-observed" src="study-03.htm"></iframe>
+</figure>
+
+<!--h3--Study 3: Detecting Lines Under the Pointer--></div>
+
+<h3 cbc>Study 4: Proximity Detection</h3><div>
+
+<p>Proximity detection can only be done with transparent helper object, painted on top of the actual object. These helper elements have a fill value of <tt>none</tt>, a transparent stroke-color so that they receive pointerenter and pointerleave events. Additionally, the stroke-width is expanded according to the proximity detection settings:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;circle r="25" id="c-001" 
+	stroke="grey" stroke-width="3" fill="none" 
+	transform="translate(25,15)" &gt;
+	&lt;/circle&gt;
+&lt;circle class="snap-overlay" r="25" id="<hi>c-001-overlay</hi>" 
+	stroke="<hi>transparent</hi>" stroke-width="<hi>12</hi>" fill="<hi>none</hi>" 
+	transform="translate(25,15)" &gt;
+	&lt;/circle&gt;
+</pre></figure>
+
+<p>As an effect, the pointerenter event already occurs if the pointer is near the object.</p>
+
+<p>This can be tested in the following study:</p>
+
+<figure class="demo"><figcaption>Pointer enter and leave events (<a href="study-04.htm" target="_blank">study 4</a>)</figcaption>
+<iframe class="content-height-observed" src="study-04.htm"></iframe>
+</figure>
+
+<p>A library may implement these ideas in several ways. One approach is to generate these "overlay" elements together with the actual drawing elements. By default, they have a style of <tt>display=none</tt>, so they don't have an effect. A classlist attribute ("snap-geometry") on the SVG root element activates these elements, a CSS rule overrides the <tt>display</tt> style:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+svg.snap-geometry .snap-overlay {
+	display : initial ;
+	}
+</pre></figure>
+
+<p>Another strategy generates these elements "on demand", i. e. when the snap-to-geometry function is activated, and removes them when the function is deactivated. This might take some time, so the previous method is considered first, but has the advantage that the geometry object edit procedures don't have to maintain these auxiliary objects.</p>
+
+<p>Another thought: The current implementation duplicates only the stroke. Depending on the object type (circle, rectangle, polyline, etc.), additional snap points for vertices, center, and line mid-points could be generated. The CSS code must be refined then:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+svg.snap-geometry .snap-stroke { display : initial }
+svg.snap-geometry .snap-vertex { display : initial }
+svg.snap-geometry .snap-center { display : initial }
+svg.snap-geometry .snap-midpoint { display : initial }
+</pre></figure>
+
+<p>Depending on the element that caused a <tt>pointerenter</tt> event, the coordinates for the auxiliary (secondary) pointer must be calculated. Vertex, center and mitpoints are easy, they are circles with a well-defined center. Snap to stroke could be difficult, because that required some calculations, based on the actual geometry.</p>
+
+<!--h3--Study 4: Proximity Detection--></div>
+
+<h3 cbc>Study 5: Snap to Geometry</h3><div>
+
+<p>This study adds the proximity detection objects and the associated detection logic. First, we have the rectangle, a drawing object, in the SVG document:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;rect id="r-001" x="-150" y="-40" width="80" height="60" 
+	stroke="black" stroke-width="1" fill="white" &gt;
+	&lt;/rect&gt;
+</pre></figure>
+
+<p>It is followed by a number of auxiliary elements for proximity detection and pointer snapping. The fist one is another rectangle with a classname of <tt>snap-overlay stroke</tt>:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;rect class="<hi>snap-overlay stroke</hi>" data-for="<hi>r-001</hi>" 
+	x="-150" y="-40" width="80" height="60" 
+	stroke="transparent" stroke-width="12" fill="none" &gt;
+	&lt;/rect&gt;
+</pre></figure>
+
+<p>As already outlined in study 4, it has a transparent wide stroke and no fill color, and is used to snap the pointer to the sides of the rectangle. The <tt>data-for</tt> attribute points to the associated drawing object, the rectangle above.</p>
+
+<p>This is followed by a circle element at the center of the rectangle:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;circle class="<hi>snap-overlay center</hi>" data-for="<hi>r-001</hi>" 
+	cx="-110" cy="-10" r="5" 
+	stroke="none" fill="#dbd" &gt;
+	&lt;/circle&gt;
+</pre></figure>
+
+<p>The classname is <tt>snap-overlay center</tt>, which speaks for itself.</p>
+
+<p>Then we have four vertex snap overlays for the corner points:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;circle class="<hi>snap-overlay vertex</hi>" data-for="<hi>r-001</hi>" 
+	cx="-150" cy="-40" r="5" stroke="none" fill="#dbd" &gt;
+	&lt;/circle&gt;
+&lt;circle class="<hi>snap-overlay vertex</hi>" data-for="<hi>r-001</hi>" 
+	cx="-70" cy="-40" r="5" stroke="none" fill="#dbd" &gt;
+	&lt;/circle&gt;
+&lt;circle class="<hi>snap-overlay vertex</hi>" data-for="<hi>r-001</hi>" 
+	cx="-70" cy="20" r="5" stroke="none" fill="#dbd" &gt;
+	&lt;/circle&gt;
+&lt;circle class="<hi>snap-overlay vertex</hi>" data-for="<hi>r-001</hi>" 
+	cx="-150" cy="20" r="5" stroke="none" fill="#dbd" &gt;
+	&lt;/circle&gt;
+</pre></figure>
+
+<p>And four midpoint snap overlays for the midpoints of the perimeter lines:</p>
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;circle class="<hi>snap-overlay midpoint</hi>" data-for="<hi>r-001</hi>" 
+	cx="-110" cy="-40" r="5" stroke="none" fill="#dbd" &gt;
+	&lt;/circle&gt;
+&lt;circle class="<hi>snap-overlay midpoint</hi>" data-for="<hi>r-001</hi>" 
+	cx="-70" cy="-10" r="5" stroke="none" fill="#dbd" &gt;
+	&lt;/circle&gt;
+&lt;circle class="<hi>snap-overlay midpoint</hi>" data-for="<hi>r-001</hi>" 
+	cx="-110" cy="20" r="5" stroke="none" fill="#dbd" &gt;
+	&lt;/circle&gt;
+&lt;circle class="<hi>snap-overlay midpoint</hi>" data-for="<hi>r-001</hi>" 
+	cx="-150" cy="-10" r="5" stroke="none" fill="#dbd" &gt;
+	&lt;/circle&gt;
+</pre></figure>
+
+<p>The next drawing element is a circle:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;circle r="25" id="c-001" 
+	stroke="black" stroke-width="1" fill="none" 
+	transform="<hi>translate(25,15)</hi>" &gt;
+	&lt;/circle&gt;
+</pre></figure>
+
+<p>The circle is followed by the two associated snap overlay elements, one for the stroke, the other for the center point:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;circle class="<hi>snap-overlay stroke</hi>" data-for="<hi>c-001</hi>" 
+	r="25" stroke="transparent" stroke-width="12" fill="none" 
+	transform="<hi>translate(25,15)</hi>" &gt;
+	&lt;/circle&gt;
+&lt;circle class="<hi>snap-overlay center</hi>" data-for="<hi>c-001</hi>" 
+	r="5" stroke="none" fill="#dbd" 
+	transform="<hi>translate(25,15)</hi>" &gt;
+	&lt;/circle&gt;
+</pre></figure>
+
+<p>By default, these snap overlay elements are not rendered:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;style id="styleTheDocument"&gt;
+#theDocument .snap-overlay { display : <hi>none</hi> }
+&lt;/style&gt;
+</pre></figure>
+
+<p>Additional rules make these elements visible:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+#theDocument.snap-vertex .snap-overlay.vertex { display : <hi>initial</hi> }
+#theDocument.snap-center .snap-overlay.center { display : <hi>initial</hi> }
+#theDocument.snap-midpoint .snap-overlay.midpoint { display : <hi>initial</hi> }
+#theDocument.snap-stroke .snap-overlay.stroke { display : <hi>initial</hi> }
+</pre></figure>
+
+<p>On behalf of the user, the related class attributes are placed on the SVG document:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;svg id="theDocument" 
+	class="<hi>snap-vertex snap-midpoint snap-center snap-stroke</hi>" 
+	viewBox="-170,-150,300,300" width="300" height="300" 
+	style="touch-action:none"&gt;
+</pre></figure>
+
+<p>This way, each class of snap overlay can be activated or deactivated.</p>
+
+<p>Another change was made to the code. Now only the snap-overlay elements get event listeners attached:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+for ( const o of theDocument.<hi>querySelectorAll( ".snap-overlay" )</hi>) {
+	o.addEventListener( "pointerdown", evt => {
+		console.debug( "<hi>Snap overlay selected</hi>:", `${evt.target.className.baseVal} for ${evt.target.getAttribute("data-for")}` );
+		} ) ;
+	}
+</pre></figure>
+
+<p>We now only need the <tt>pointerdown</tt> event handler, which runs when an active snap point is selected.</p>
+
+<p>This can be tested in the following study. Click on the violet snap points, and also somewhat near the black stroke lines and watch the console messages:</p>
+
+<figure class="demo"><figcaption>Pointer enter and leave events (<a href="study-05.htm" target="_blank">study 5</a>)</figcaption>
+<iframe class="content-height-observed" src="study-05.htm"></iframe>
+</figure>
+
+<p>The next study adds the secondary pointer, which demonstrates how the snap overlay elements attract the pointer.</p>
+
+<!--h3--Study 5: Snap to Geometry--></div>
+
+<h3 cbc>Study 6: Introducing the Secondary Pointer</h3><div>
+
+<p>To get a better impression of the snap-to-geometry features, this study introduces the secondary auxiliary pointer, which is programmed to follow the primary pointer:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;path id="auxiliaryPointer" 
+	d="M 0 -1 v -4 M 1 0 h 4 M 0 1 v 4 M -1 0 h -4" 
+	stroke="black" stroke-width="1" fill="none"
+	<hi>pointer-events="none"</hi> &gt;
+	&lt;/path&gt;
+</pre></figure>
+
+<p>The auxiliary pointer is maintained als last child element of the SVG document element, so that it is always above all other drawing elements, and therefore always visible.</p>
+
+<p>Here an enlarged image of the pointer:</p>
+
+<figure class="figure"><figcaption>The centerpoint must be kept free</figcaption>
+<img src="fig-001.png" width="36" />
+</figure>
+
+<p>Note that the auxiliary pointer must not receive any pointer events, it must be absolutely "transparent" for pointer events. Therefore the highlighted attribute above is very important.</p>
+
+<p>Moving the auxiliary pointer is done with the following code:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+function <hi>moveAuxiliaryPointer</hi> ( evt ) {	
+	let point = theDocument.createSVGPoint( );
+	point.x = evt.clientX ;
+	point.y = evt.clientY ;
+	point = point.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	auxiliaryPointer.setAttribute( "transform", `<hi>translate</hi>( ${ Math.round( point.x ) },${ Math.round( point.y ) } )` );
+	} 
+theDocument.addEventListener( "<hi>pointermove</hi>" , <hi>moveAuxiliaryPointer</hi> );
+</pre></figure>
+
+<p>If the primary pointer is moved over the document, the event handler converts the CSS coordinates from the event object into the coordinate system of the SVG root element, then adds a <tt>transform</tt> attribute to the aux pointer element to update its position.</p>
+
+<p>A loop iterates over the snap points in the document and adds two event handlers:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+for ( const o of theDocument.querySelectorAll( "<hi>.snap-overlay.point</hi>" )) {
+	o.addEventListener( "<hi>pointerenter</hi>" , evt => {
+		<cc>// Pin aux pointer to center of the snap point</cc>
+		auxiliaryPointer.setAttribute( "<hi>transform</hi>", `<hi>translate</hi>( ${ evt.target.cx.baseVal.value },${ evt.target.cy.baseVal.value } )` );
+		theDocument.<hi>remove</hi>EventListener( "<hi>pointermove</hi>" , <hi>moveAuxiliaryPointer</hi> );
+		} ) ;
+	o.addEventListener( "pointerleave" , evt => {
+		<cc>// Make aux pointer follow the primary pointer again</cc>
+		theDocument.addEventListener( "<hi>pointermove</hi>" , <hi>moveAuxiliaryPointer</hi> );
+		moveAuxiliaryPointer( evt );
+		} ) ;
+	}
+</pre></figure>
+
+<p>If the primary pointer enters a snap point, the first event handler kicks in. It moves the aux pointer to the center of the snap point, then deactivates the <tt>moveAuxiliaryPointer</tt> handler so that the auxiliary pointer can stay there, even if the primary pointer is moving away.</p>
+
+<p>The second event handler kicks in when the primary pointer is moved off the snap point. It re-activates the <tt>moveAuxiliaryPointer</tt> event handler so that the aux pointer again follows the primary pointer. An explicit call to the event handler immediately updates its position.</p>
+
+<p>The snap point class names have been changed a little bit:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;circle class="snap-overlay <hi>center point</hi>" data-for="r-001" cx="-110" cy="-10" r="5" stroke="none" fill="#dbd" &gt;&lt;/circle&gt;
+&lt;circle class="snap-overlay <hi>vertex point</hi>" data-for="r-001" cx="-150" cy="-40" r="5" stroke="none" fill="#dbd" &gt;&lt;/circle&gt;
+&lt;circle class="snap-overlay <hi>mid point</hi>" data-for="r-001" cx="-110" cy="-40" r="5" stroke="none" fill="#dbd" &gt;&lt;/circle&gt;
+</pre></figure>
+
+<p>This facilitates event handler registration by using the CSS class selector <tt>.snap-overlay.point</tt></p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+for ( const o of theDocument.querySelectorAll( "<hi>.snap-overlay point</hi>" )) ...
+</pre></figure>
+
+<p>One point has to be solved: Using the position of the auxiliary pointer on a <tt>pointerdown</tt> event:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+theDocument.addEventListener( "pointerdown", evt => {
+	const matrix = auxiliaryPointer.transform.baseVal.consolidate().<hi>matrix</hi> ;
+	console.debug( "Aux position used:", `${ <hi>matrix.e</hi> } ${ matrix.f } for ${evt.target.getAttribute("data-for")}` );
+	} ) ;
+</pre></figure>
+
+<p>The matrix <tt>e</tt> and <tt>f</tt> components contain the translation components.</p>
+
+<figure class="demo"><figcaption>Snapping the auxiliary pointer (<a href="study-06.htm" target="_blank">study 6</a>)</figcaption>
+<iframe class="content-height-observed" src="study-06.htm"></iframe>
+</figure>
+
+<!--h3--Study 6: Introducing the Secondary Pointer--></div>
+
+<h3 cbc>Study 7: Controlling Snapping Features</h3><div>
+
+<p>In this study, we will controll the snapping features. The document gets a dialog with checkbox inputs:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;div id="snapToGeometryDialog"&gt;
+&lt;label&gt;&lt;input id="checkSnapCenter" type="checkbox" /&gt;center&lt;/label&gt; 
+&lt;label&gt;&lt;input id="checkSnapVertex" type="checkbox" /&gt;vertex&lt;/label&gt; 
+&lt;label&gt;&lt;input id="checkSnapMidPoint" type="checkbox" /&gt;mid point&lt;/label&gt; 
+&lt;label&gt;&lt;input id="checkSnapStroke" type="checkbox" /&gt;stroke&lt;/label&gt; 
+&lt;/div&gt;
+</pre></figure>
+
+<p>A set of event handlers adds or removes class names to the SVG root document element:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+checkSnapCenter.addEventListener( "change" , ( ) => 
+	theDocument.classList.toggle( "snap-center" )) ;
+checkSnapMidPoint.addEventListener( "change" , ( ) => 
+	theDocument.classList.toggle( "snap-midpoint" )) ;
+checkSnapVertex.addEventListener( "change" , ( ) => 
+	theDocument.classList.toggle( "snap-vertex" )) ;
+checkSnapStroke.addEventListener( "change" , ( ) => 
+	theDocument.classList.toggle( "snap-stroke" )) ;
+</pre></figure>
+
+<p>Depending on the presence of a particular class name, snap features show or hide.</p>
+
+<p>What's missing:</p>
+<ul>
+<li>Snap to stroke algorithm</li>
+<li>Setting the size of snap elements</li>
+<li>Setting the color of snap elements</li>
+<li>Setting the transparency of snap elements</li>
+</ul>
+
+<figure class="demo"><figcaption>Controlling the snap features (<a href="study-07.htm" target="_blank">study 7</a>)</figcaption>
+<iframe class="content-height-observed" src="study-07.htm"></iframe>
+</figure>
+
+<!--h3--Study 7: Controlling Snapping Features--></div>
+
+<h3 cbc>Study 8: Snap to Stroke</h3><div>
+
+<p>This study implements a generic search algorithm that tracks an arbitrary path and determines the nearest distance to the current pointer location. The algorithm will be tested with a circle and a rectangle, but should also work for any other path. Simple geometric objects such as ellipse, rectangle and line can also be processed algorithmically. This will be postponed to a following study.</p>
+
+<p>The entry point for the search algorithm is the <tt>pointerenter</tt> event on the path overlay element:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;rect id="r-001" 
+	x="-150" y="-40" width="80" height="60" 
+	stroke="black" stroke-width="1" fill="white" &gt;
+	&lt;/rect&gt;
+&lt;rect class="<hi>snap-overlay stroke</hi>" data-for="r-001" 
+	x="-150" y="-40" width="80" height="60" 
+	stroke="transparent" stroke-width="16" fill="none" &gt;
+	&lt;/rect&gt;
+&lt;circle r="25" id="c-001" 
+	stroke="black" stroke-width="1" fill="none" 
+	transform="translate(25,15)" &gt;
+	&lt;/circle&gt;
+&lt;circle class="<hi>snap-overlay stroke</hi>" data-for="c-001" 
+	<hi>cx="25" cy="15"</hi> r="25" 
+	stroke="transparent" stroke-width="12" fill="none" &gt;
+	&lt;/circle&gt;
+</pre></figure>
+
+<p>As already discussed, the snap overlay elements have the same shape and position as their associated source object, but a transparent stroke color and a large stroke-width.</p>
+
+<p>NOTE that a <tt>transform=translate()</tt> attribute is translated into position attribute changes.</p>
+
+<p>The idea is to compile a list of points on such a stroke path to feed the search algorithm:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+const <hi>points</hi> = [ ] ;
+for ( const o of theDocument.querySelectorAll( "<hi>.snap-overlay.stroke</hi>" )) {
+	o.addEventListener( "<hi>pointerenter</hi>", evt => { 
+		<cc>// Prepare a number of points on the path</cc>
+		const length = evt.target.getTotalLength( );
+		const delta = length / 100 ;
+		for ( let i = 0 ; i <= length ; i += delta ) <hi>points.push</hi>( evt.target.<hi>getPointAtLength</hi>( i ));
+		<cc>// Exchange the pointer tracker</cc>
+		theDocument.removeEventListener( "pointermove" , trackPrimaryPointer );
+		evt.target.<hi>addEventListener</hi>( "pointermove" , <hi>trackComplexPath</hi> );
+		} ) ;
+	o.addEventListener( "pointerleave", evt => { 
+		<cc>// Restore the primary pointer tracker</cc>
+		theDocument.<hi>addEventListener</hi>( "pointermove" , <hi>trackPrimaryPointer</hi> );
+		evt.target.removeEventListener( "pointermove" , trackComplexPath );
+		} ) ;
+	}
+</pre></figure>
+
+<p>These points are compiled in the <tt>pointerenter</tt> event handler. When done, the pointer tracking algorithm is exchanged. The new tracking function is <tt>trackComplexPath</tt>.</p>
+
+<p>When the primary pointer leaves the snap path overlay, the original tracking function is reestablised.</p>
+
+<p>When the primary pointer is moved,  <tt>trackComplexPath()</tt> is executed:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+function <hi>trackComplexPath</hi> ( evt ) {
+	<cc>// Convert CSS to SVG coordinates</cc>
+	let point = theDocument.createSVGPoint( );
+	point.x = evt.clientX ;
+	point.y = evt.clientY ;
+	point = point.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	<cc>// Result variables</cc>
+	let dmin = Number.MAX_VALUE ;  <cc>// minimum distance</cc>
+	let pmin = undefined ;  <cc>// point on stroke with minimum distance</cc>
+	<cc>// Loop through the points on the path</cc>
+	for ( const p of points ) {
+		<cc>// distance to point on path</cc>
+		const d = Math.sqrt( ( point.x - p.x) ** 2 + ( point.y - p.y ) ** 2 );
+		<cc>// Store if a smaller distance was found</cc>
+		if ( d < dmin ) { dmin = d ; pmin = p }
+		}
+	<cc>// Move the auxiliary pointer to the nearest point on the stoke-path</cc>
+	auxiliaryPointer.setAttribute( "transform", 
+		`translate( ${ Math.round( pmin.x ) },${ Math.round( pmin.y ) } )` );
+	} 
+</pre></figure>
+
+<p>The code is rather simple. In the loop, every point in the list is checked against the primary pointer position. The one with the smallest distance ends up in <tt>pmin</tt>, which is used to position the auxiliary pointer.</p>
+
+<p>It should be possible to improve the implementation. For example, the initial distance between points in the list could be made larger. That leads to shorter search times, with the drawback of reduces precision. This could be compensated by a local search around the first hit point and two of its neighbors. This requires that the distance from the start of the path is also stored in the list. Then it is possible to compute path length values for the space between these points.</p>
+
+<p>New points shall be stored in the list. While moving in the direction of shorter distances, new points will be retrieved with higher resolution, until the distance gets bigger.</p>
+
+<p>The index into the points list is stored and used in the following <tt>pointermove</tt> event handling. Assuming that the distance between the previous and current pointer position is small, a local search can be performed with high precision.</p>
+
+<p>Another improvement: The points list shall not be recompiled if </p>
+
+<figure class="demo"><figcaption>Generic snap-to-path implementation (<a href="study-08.htm">Study 8</a>)</figcaption>
+<iframe class="content-height-observed" src="study-08.htm"></iframe>
+</figure>
+
+<!--h3--Study 8: Snap to Stroke--></div>
+
+<h3 cbc>Study 9: Optimized Path Search</h3><div>
+
+<p>The first step is to re-use existing path points. This requires that the associated path element must be stored:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+const <hi>strokePath</hi> = {  // Samples of an snap-overlay stroke path
+	<hi>element</hi> : undefined ,
+	points : [ ] 
+	}
+</pre></figure>
+
+<p>If the pointer enters the same snap path element again, the path point-sampling part is skipped:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+o.addEventListener( "pointerenter", evt => { 
+	if ( <hi>strokePath.element !== evt.target</hi> ) {
+		strokePath.element = evt.target ;
+		strokePath.points.length = 0;
+		<cc>// Sample points from the stroke path</cc>
+		const length = evt.target.getTotalLength( );
+		<cc>// Start with wide-spaced samples (approx. 10 pixels)</cc>
+		const delta = <hi>length / ( length / 10 | 0 )</hi> ;  
+		for ( let i = 0 ; i <= length ; i += delta ) {
+			const p = evt.target.getPointAtLength( i );
+			<hi>p.distance = i</hi> ;
+			strokePath.points.push( p );
+			}
+		}
+	...
+</pre></figure>
+
+<p>Then the distance between sample points is enlarged to approximately 10 pixels (achieved by the tricky integer division <tt>length / 10 | 0</tt> in the listing above).</p>
+
+<p>Another change was made to the point: The distance from the start or the path (i) is recorded with the point coordinates. This enables the use of approximation strategies in <tt>trackSnapPath()</tt>.</p>
+
+<p>The next refinement step was made to <tt>trackSnapPath()</tt>. After finding the nearest point in the list, the intervals to the left and right are examined further.</p>
+
+<!--h3--Study 9: Optimized Path Search--></div>
+
+<h3 cbc>Study 10: Optimized Path Search 2</h3><div>
+
+<p>This study also uses a two step search strategy, but this thime, the coarse scan points are arranged differently: All points in the coarce scan list are spaced at equal distances, only the first and last points are half the distance away from start and end of the path. This eliminates problems with closed paths.</p>
+
+<figure class="figure"><figcaption></figcaption>
+<img src="fig-002.png" width="400" />
+</figure>
+
+<p>In the image above, <mathtext><mi>l</mi></mathtext> is the segment length of a coarse scan point, the one in the middle at <mathtext><mi>l</mi><mo>/</mo><mn>2</mn></mathtext>. The segment is divided into an even number <mathtext><mi>n</mi></mathtext> of smaller sections, 8 in this example. A fine scan point is located at the beginning of each of these sections, except the one in the middle, which is already occupied by the coars scan point.</p>
+
+<p>Note that there is no fine scan sample point at the right end of the coarse scan section; this place is occupied by the first fine scan point of the following coarse scan segment.</p>
+
+<p>Now, the fine scan points are now located on <em>both</em> sides of the coarse scan sample point. This eliminates the problem of finding right and left neighbor points in the coarse scan list, which caused some headaches in the previous study.</p>
+
+<p>This study also addresses potential problems with twisted path curves, as we will see shortly.</p>
+
+<p>Let's begin with the container object for the path scan data and the target distance between points:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+const coarseScan = { 
+	points : [ ] <cc>// Samples from a snap-overlay stroke path</cc>
+	} ;  
+const coarseScanPointDistance = 10 ;
+</pre></figure>
+
+<p>It is set up when the pointer enters the snap overlay element for the first time:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+for ( const o of theDocument.querySelectorAll( ".snap-overlay.stroke" )) {
+	o.addEventListener( "pointerenter", evt => { 
+		if ( <hi>coarseScan.target</hi> !== <hi>evt.target</hi> ) {
+			coarseScan.target = evt.target ;
+</pre></figure>
+
+<p>The event target element is stored in order to prevent redundant initializations. Next the number of sample points and their exact distance are calculated:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+			<cc>// Calculate parameters for the scan</cc>
+			const pathLength = coarseScan.target.<hi>getTotalLength</hi>( );
+			const n = pathLength / coarseScanPointDistance | 0 ;  
+			coarseScan.pointDistance = pathLength / n ;
+			coarseScan.points.length = 0 ;
+</pre></figure>
+
+<p>The expression <tt>pathLength / 10 | 0</tt> determines the possible number of segments <tt>n</tt> with the approximate desired point distance. Effectively, this is an integer division. With this value, we can calculate the exact segment length and store it in a <tt>coarseScan</tt> object member.</p>
+
+<p>Then follows the coarse scan loop:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+			<cc>// Scan loop</cc>
+			for ( let position = pointDistance / 2, i = 0 ; i < n ; i += 1 , position += pointDistance ) {
+				const p = coarseScan.target.getPointAtLength( position );
+				p.position = position ;
+				coarseScan.points.push( p );
+				}
+			}
+</pre></figure>
+
+<p>The first point is at half the <tt>pointDistance</tt>. The distance of the sampled point from the start of the path is also stored in the point strucure. This value is used later to calculate parameters for the fine scan.</p>
+
+<p>The final preparation step exchanges the <tt>pointermove</tt> event handler. The new one implements the path tracking algorithm:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+		<cc>// Exchange the pointer tracker</cc>
+		theDocument.removeEventListener( "pointermove" , trackPrimaryPointer );
+		evt.target.addEventListener( "pointermove" , trackSnapPath );
+		} ) ;
+</pre></figure>
+
+<p>The preparation is complete with registering the <tt>pointerleave</tt> event handler:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	o.addEventListener( "pointerleave", evt => { 
+		<cc>// Restore the primary pointer tracker</cc>
+		theDocument.addEventListener( "pointermove" , trackPrimaryPointer );
+		evt.target.removeEventListener( "pointermove" , trackSnapPath );
+		} ) ;
+	}
+</pre></figure>
+
+<p>Here, the default event handler (<tt>trackPrimaryPointer</tt>) is restored.</p>
+
+<p>Now the interesting path, the tracking function. It runs whenever the pointer moved to a new position:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+function trackSnapPath ( evt ) {
+	<cc>// Configuration</cc>
+	const candidateListLength = 5 ;
+	const numFineScanSamples = 10 ;  <cc>// must be even</cc>
+	<cc>// Determine pointer coordinates</cc>
+	let pointer = theDocument.createSVGPoint( );
+	pointer.x = evt.clientX ;
+	pointer.y = evt.clientY ;
+	pointer = pointer.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+</pre></figure>
+
+<p>The first part determines the current pointer coordinates in the SVG user space. Then the coarse scan of the path takes place:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	<cc>// Coarse scan: Find the best n candidates</cc>
+	let distance = Number.MAX_VALUE ;
+	const candidates = [ ] ;
+	for ( const p of coarseScan.points ) {
+		<cc>// Collect points with the smallest distance to the pointer </cc>
+		const d = Math.sqrt( ( pointer.x - p.x) ** 2 + ( pointer.y - p.y ) ** 2 );
+		if ( d < distance ) {
+			candidates.push( { point : p , distance : d } );
+			if ( candidates.length > candidateListLength ) {
+				candidates.sort( (a, b) => { return a.distance - b.distance } );
+				candidates.length -= 1 ;
+				distance = candidates[ candidateListLength - 1 ].distance ;
+		}	}	}
+</pre></figure>
+
+<p>The loop samples equi-distant points from the path and calculates their distance <tt>d</tt> to the pointer, and stores the result in the <tt>candidates</tt> list. If the list has grown above the configured size <tt>candidateListLength</tt>, the list is sorted, and the smallest value is removed.</p>
+
+<p>The code above implements some optimizations, because this is a time-critical piece of code.</p>
+
+<p>After picking the nearest n candiditates, a fine scan is run on each of them. In a preparation step, the two result variables are initialized, then a loop runs over the candidates:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	<cc>// Fine scan the n best candidates</cc>
+	distance = Number.MAX_VALUE ;
+	let point = undefined ;
+	for ( const candidate of candidates ) {
+</pre></figure>
+
+<p>On the first run, the fine scan list must be created:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+		if ( ! candidate.point.fineScan ) {
+			<cc>// Compile the fine scan list</cc>
+			candidate.point.fineScanList = [ ] ;
+			const pointDistance = coarseScan.pointDistance / <hi>numFineScanSamples</hi> ;
+			for ( let position = candidate.point.position - numFineScanSamples / 2 * pointDistance, i = 0 ; i < numFineScanSamples ; i += 1 , position += pointDistance ) {
+				if ( i !== numFineScanSamples / 2 ) candidate.point.<hi>fineScanList</hi>.push( coarseScan.target.<hi>getPointAtLength</hi>( position ));
+				}
+			}
+</pre></figure>
+
+<p>Effectively, this is the same algorithm as used for the coarse scan list, but here the number of samples is the configuration parameter. Inside the loop, the samples are pushed to the <tt>fineScanList</tt> member of the candidate point.</p>
+
+<p>This step has only to be done once.</p>
+
+<p>When done and the list is available, we can run the search loop:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+		<cc>// Search the point of smallest distance</cc>
+		for ( const p of candidate.point.<hi>fineScanList</hi> ) {
+			const d = Math.sqrt(( p.x - pointer.x ) ** 2 + ( p.y - pointer.y ) ** 2 );
+			if ( <hi>d < distance</hi> ) { distance = d ; point = p }
+			}
+		}
+</pre></figure>
+
+<p>This search is performed on every canditate in the list. When done, the final result is ready:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	<cc>// Move the auxiliary pointer to the result point</cc>
+	auxiliaryPointer.setAttribute( "transform", `translate( ${ Math.round( point.x ) },${ Math.round( point.y ) } )` );
+	}
+</pre></figure>
+
+<figure class="demo"><figcaption>Snap to path, nearest candidates version (<a href="demo-10-a.htm" target="_blank">Demo 10a</a>)</figcaption>
+<iframe class="content-height-observed" src="demo-10-a.htm"></iframe>
+</figure>
+
+<!--h3--Study 10: Optimized Path Search 2--></div>
+
+<h3 cbc>Study 11: Snap to Circle</h3><div>
+
+<p>This demo shows how to snap to a circular snap path.</p>
+
+<!--h3--Study 11: Snap to Circle--></div>
+
+<!--h2--Studies--></div>
+
+<h2 cbc>References</h2><div>
+
+<h3>Programming References</h3>
+
+<dl>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/Document/elementFromPoint">document.elementFromPoint()</a></dt>
+	<dd>returns the topmost element at that point.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGGeometryElement/isPointInFill">SVGGeometryElement.isPointInFill()</a></dt>
+	<dd>Determines whether a given point is within the fill shape of an element.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGGeometryElement/isPointInStroke">SVGGeometryElement.isPointInStroke()</a></dt>
+	<dd>Determines whether a given point is within the stroke shape of an element.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGGraphicsElement/getBBox">SVGGraphicsElement.getBBox()</a></dt>
+	<dd>Returns a DOMRect representing the computed bounding box of the current element.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/Element/pointerenter_event">element.pointerenter</a></dt>
+	<dd>he pointerenter event fires when a pointing device is moved into the hit test boundaries of an element or one of its descendants, including as a result of a pointerdown event from a device that does not support hover (see pointerdown).</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGSVGElement/checkIntersection">SVGSVGElement.checkIntersection()</a></dt>
+	<dd>Returns true if the rendered content of the given element intersects the supplied rectangle.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGSVGElement/checkEnclosure">SVGSVGElement.checkEnclosure()</a></dt>
+	<dd>Returns true if the rendered content of the given element is entirely contained within the supplied rectangle.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGSVGElement/deselectAll">SVGSVGElement.deselectAll()</a></dt>
+	<dd>Unselects any selected objects, including any selections of text strings and type-in bars.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGTransformList/consolidate">SVGTransformList: consolidate()</a></dt>
+	<dd>Consolidates the list of separate SVGTransform objects by multiplying the equivalent transformation matrices together to result in a single transformation matrix. Useful to read out the position of the auxiliary pointer.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/pathLength"><tt>pathLength</tt> Attribute</a></dt>
+	<dd>The pathLength attribute lets authors specify a total length for the path, in user units.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGGeometryElement/getPointAtLength">SVGGeometryElement: getPointAtLength()</a></dt>
+	<dd>Returns the point at a given distance along the path.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGGeometryElement/getTotalLength">SVGGeometryElement: getTotalLength()</a></dt>
+	<dd>Returns the user agent's computed value for the total length of the path in user units.</dd>
+</dl>
+
+<h3>Articles</h3>
+
+<dl>
+<dt><a href="https://www.smashingmagazine.com/2018/05/svg-interaction-pointer-events-property/">Managing SVG Interaction With The Pointer Events Property</a> by Tiffany Brown, Smashing Magazine</dt>
+<dt><a href="https://stackoverflow.com/questions/63439727/efficient-way-to-find-point-on-a-svg-stroke-closest-to-the-current-mouse-point">Efficient way to find point on a svg stroke closest to the current mouse point?</a></dt>
+	<dd>By Alex on Stackoverflow.</dd>
+
+</dl>
+
+<!--h2--References--></div>
+
+</body></html>

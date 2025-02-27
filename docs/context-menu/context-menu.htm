@@ -1,0 +1,386 @@
+﻿<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-12-09" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-01-24" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-03" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/tutorial-page.css" />
+<script type="module" src="/inc/webcat/page-structure/tutorial-page.js" ></script>
+<link rel="stylesheet" href="/webcat/math/math-text.css" />
+ 
+<meta name="categories" content="Projects > SVG Editor > Input Controls" />
+<meta name="tags" content="project, svg, editor, user, interface, UI, input, control, context, menu" />
+<meta name="description" content="" />
+
+<title>Context Menu (Projects > SVG Editor > User Interface > Controls)</title>
+
+</head><body>
+
+<h1>Context Menu</h1><p class="subtitle">Invoking Functions</p>
+
+<h2 cbc>Introduction</h2><div>
+
+<p>Context menus provide access to every important function of the editor. They are invoked on a <tt>contextmenu</tt> event, a right-mouse-click, or a long finger tap, a long pen touch, a context menu key press on the keyboard. The design will be based on one ore more concentric rings of buttons.</p>
+
+<p>The context menus will be loaded as <tt>DIV</tt> elements with a <tt>popover</tt> attribute. </p>
+
+<!--h2--Introduction--></div>
+
+<h2 cbc>Studies</h2><div>
+
+<h3 cbc>Study 1: Positioning and Button Positioning</h3><div>
+
+<h4 cbc>Context Menu Positioning</h4><div>
+
+<p>The context menu must be centered around the point where the right mouse button goes down.</p>
+
+<p>The context menu needs an HTML container element, a <tt>DIV</tt> element with an <tt>popover</tt> attribute, because the <tt>popover</tt> attribute on an SVG element has no effect:</p>
+
+<figure class="listing"><figcaption>The context menu element</figcaption><pre>
+&lt;div id="contextMenuContainer" <hi>popover</hi>&gt;
+	&lt;svg id="contextMenu" viewBox="-50,-50,100,100" width="32" height="32"&gt;...&lt;/svg&gt;
+	&lt;/div&gt;
+</pre></figure>
+
+<p>Inside is the <tt>contextMenu</tt> <tt>SVG</tt> element, which is scaled down to 32&times;32 pixel. The menu content will overflow these borders, therefore some CSS is necessary:</p>
+
+<figure class="listing"><figcaption>Overflow visible</figcaption><pre>
+div#theContextMenu ,
+div#theContextMenu svg {
+	overflow : <hi>visible</hi> ;
+	}
+</pre></figure>
+
+<p>A script registers a contextment event handler with the document element:</p>
+
+<figure class="listing"><figcaption>Positioning</figcaption><pre>
+&lt;script id="scriptContextMenu" type="module"&gt;
+document.addEventListener( "contextmenu" , evt =&gt; {
+	evt.preventDefault( );
+	theContextMenu.showPopover( );
+	<cc>// Position dialog to mouse event location</cc>
+	const { width, height } = theContextMenu.getBoundingClientRect( );
+	theContextMenu.style.marginLeft = evt.pageX - width / 2 + "px" ;
+	theContextMenu.style.marginTop = evt.pageY - height / 2 + "px" ;
+	...
+</pre></figure>
+
+<p>The event handler shows the menu, determines width and height, and centers the menu over the mouse down point by setting margin top and left style properties.</p>
+
+<!--h4--Context Menu Positioning--></div>
+
+<h4 cbc>Button Structure</h4><div>
+
+<p>A context menu button has the following structure:</p>
+
+<figure class="listing"><figcaption>Structure of a button</figcaption><pre>
+&lt;g&gt;
+	&lt;circle r="45" title="Long Name"/&gt;
+	&lt;text&gt;Short Name&lt;/text&gt;
+	&lt;/g&gt;
+</pre></figure>
+
+<p>The button is implemented by an SVG group element, which contains an opaque <tt>circle</tt> and a <tt>text</tt> element.  The <tt>text</tt> element carries a short name suitable as button caption, the <tt>circle</tt> element carries a more descriptive long name which can be used in a tool-tip.</p>
+
+<p>A button can host child buttons:</p>
+
+<figure class="listing"><figcaption>Structure of a button</figcaption><pre>
+&lt;g&gt;
+	&lt;g&gt;
+		&lt;circle r="45" title="Button A-1"/&gt;
+		&lt;text&gt;1&lt;/text&gt;
+		&lt;/g&gt;
+	&lt;g&gt;
+		&lt;circle r="45" title="Button A-2"/&gt;
+		&lt;text&gt;2&lt;/text&gt;
+		&lt;/g&gt;
+	&lt;circle r="45" title="Button A"/&gt;
+	&lt;text&gt;A&lt;/text&gt;
+	&lt;/g&gt;
+</pre></figure>
+
+<p>Child buttons must precede their parent button circle and text elements. The z-ordering ensures that the child buttons are hidden by the parent button circle, unless the are moved to the next outer layout ring.</p>
+
+<!--h4--Button Structure--></div>
+
+<h4 cbc>Ring 0 Arrangement</h4><div>
+
+<p>The next piece of code distributes the buttons on a circle around that center. Each button is wrapped in an SVG group object:</p>
+
+<figure class="listing"><figcaption>Positioning</figcaption><pre>
+	&lt;g&gt;&lt;circle r="45" title="File"/&gt;&lt;text&gt;F&lt;/text&gt;&lt;/g&gt;
+	&lt;g&gt;&lt;circle r="45" title="View"/&gt;&lt;text&gt;V&lt;/text&gt;&lt;/g&gt;
+		...
+	&lt;g&gt;&lt;circle r="45" title="Arrange"/&gt;&lt;text&gt;A&lt;/text&gt;&lt;/g&gt;
+	&lt;g&gt;&lt;circle r="45" title="Help"/&gt;&lt;text&gt;?&lt;/text&gt;&lt;/g&gt;
+</pre></figure>
+
+<p style="margin-top:3em">The following list specifies the layout geometry.</p>
+
+<figure><figcaption style="border-style:none">List of variables (<a href="variables.htm" target="_blank">Variables</a>)</figcaption>
+<iframe class="content-height-observed" src="variables.htm"></iframe>
+</figure>
+
+<ol><li>
+	<p>A button is an SVG <tt>CIRCLE</tt> element with a diameter <span class="math-text"><span class="idf">d</span>=2<span class="idf">r</span></span>.</p>
+	<figure class="listing"><pre>&lt;circle r="20" /&gt;</pre></figure>
+</li><li>
+	<p>Buttons are placed on concentric layout circles around the context menu origin <tt>O</tt> with the radii <span class="math-text"><span class="idf">r<sub>i</sub></span></span> with <span class="math-text"><span class="idf">i</span>= {0, 1, 2, 3,&hellip;}</span>.</p>
+	<figure class="figure"><figcaption>Buttons on the first layout circle r<sub>0</sub> </figcaption>
+	<object type="text/svg+xml" data="fig-001.svg"></object>
+	</figure>
+	<p>The innermost layout circle <span class="math-text"><span class="idf">r<sub>0</sub></span></span> carries the top-level menu buttons.</p>
+</li><li>
+	<p>The distance between two circular buttons is <span class="math-text"><span class="idf">D</span>=<span class="idf">f</span><span class="idf">d</span></span>, with <span class="math-text"><span class="idf">f~1.4</span></span>. This ensures some clearance around each button.</p>
+</li><li>
+	<p>The angle between the center of the context menu and two adjacent circular buttons is <span class="math-text"><span class="idf">φ<sub>0</sub></span>=2π/<span class="idf">n</span></span>, where <span class="idf">n</span> is the number of buttons on the layout circle.</p>
+</li><li>
+	<p>The size and number of buttons on the first (innermost) layout circle determine its radius <span class="math-text"><span class="idf">r<sub>0</sub></span>=<span class="idf">D</span>/2/<span class="idf">sin</span>(<span class="idf">φ<sub>2</sub></span>/2)</span>:</p>
+</li></ol>
+
+<p>Translated into code:</p>
+
+<figure class="listing"><figcaption>Positioning</figcaption><pre>
+const buttons = theContextMenu.firstElementChild.children ;
+const f = 1.4 ;  <cc>// Space between buttons</cc>
+const D = 2 * buttons[ 0 ].lastElementChild.previousElementSibling.getAttribute( "r" ) * f ;  <cc>// Distance between buttons</cc>
+const n = buttons.length ;  <cc>// Number of buttons</cc>
+const φ0 = 2 * Math.PI / n ;  <cc>// Angle between two buttons on the first layout circle</cc>
+const r0 = D / 2 / Math.sin( φ0 / 2 ) ;  <cc>// Radius of the first layout circle</cc>
+<cc>// Place the level 0 buttons on the innermost layout circle</cc>
+for ( let i = 0, angle = 0 ; i < n ; i += 1 , angle += φ0 ) {
+	const button = buttons[ i ] ;
+	const s = `translate( ${ r0 * Math.sin( angle ) }, ${- r0 * Math.cos( angle ) } )` ;
+	button.setAttribute( "transform", s );
+	}
+} ) ;
+&lt;/script&gt;
+</pre></figure>
+
+<p>Here is the live demo:</p>
+
+<figure class="demo"><figcaption>Positioning and ring 1 distribution (<a href="study-01.htm" target="_blank">Study 1</a>)</figcaption>
+<iframe class="content-height-observed" src="study-01.htm" style="min-height:160px"></iframe>
+</figure>
+
+<p>With a mouse, right-click on the window to show the menu. A left-click outside the menu hides it. On a touch-screen, tap with two fingers. The first finger determines the menu position. Alternatively, long-tap a single finger. With a pen, long-touch or press the pen button.</p>
+
+<p>If you press the context menu key on the keyboard, the button number is minus 1 and the coordinates are (0,0). In this case, the menu should be moved to the center of the window (which is currently not implemented in the study).</p>
+
+<!--h4--Ring 0 Arrangement--></div>
+
+<!--h3--Positioning and Ring 1 Distribution--></div>
+
+<h3 cbc>Study 2: Ring 2 Distribution and Closing</h3><div>
+
+<h4 cbc>Click-Through</h4><div>
+
+<p>A click on the button's text element must be routed to the circle element beneath. This can be achieved with a CSS rule:</p>
+
+<figure class="listing"><figcaption>Click-through</figcaption><pre>
+div#theContextMenu text {
+	pointer-events : <hi>none</hi> ;
+	}
+</pre></figure>
+
+<!--h4--Click-Through--></div>
+
+<h4 cbc>Closing the Context Menu</h4><div>
+
+<p>A click on a button with no child buttons closes the context menu:</p>
+
+<figure class="listing"><figcaption>Closing the menu</figcaption><pre>
+contextMenu.addEventListener( "click" , evt => {
+	if ( ! evt.target.previousElementSibling ) <hi>closeMenu</hi>( evt.target );
+	...
+	} ) ;
+</pre></figure>
+
+<p>This is recognized if the <tt>circle</tt> element has no previous sibling.</p>
+
+<p>Buttons with a checkbox functionality might be excluded from this logic, the context menu can always be closed with a click outside the menu.</p>
+
+<p>Closing the context menu needs to restore its initial layout and state:</p>
+
+<figure class="listing"><figcaption>Closing the menu</figcaption><pre>
+function closeMenu ( activeButton ) {
+	for ( const button of contextMenu.querySelectorAll( "g" )) {
+		button.removeAttribute( "transform" );
+		button.classList.remove( "active" );
+		}
+	contextMenuContainer.hidePopover( );
+	}
+</pre></figure>
+
+<!--h4--Closing the Context Menu--></div>
+
+<h4 cbc>Exposing Child Buttons</h4><div>
+
+<p>A button with children exposes the children on a click event.</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+contextMenu.addEventListener( "click" , evt => {
+	...
+	else if ( evt.target.tagName === "circle") <hi>showChildButtons</hi>( evt.target );
+	} ) ;
+</pre></figure>
+
+<p>If you clicked on an active button, nothing should happen:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+function showChildButtons( activatedButtonCircle ) {
+	<cc>// Bail out if the button is already active</cc>
+	const activatedButton = activatedButtonCircle.parentElement ;
+	if ( activatedButton.classList.contains( "active" )) return ;
+</pre></figure>
+
+<p>An active sibling button and its children must be deactivated. The child buttons must also be moved back to their default position under their parent button circle:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	<cc>// Deactivate active sibling button and hide its children</cc>
+	const activeSibling = activatedButton.parentElement.querySelector( ".active" );
+	if ( activeSibling ) {
+		activeSibling.classList.remove( "active" );
+		for ( const button of activeSibling.querySelectorAll( "[transform]" )) {
+			button.classList.remove( "active" );
+			button.removeAttribute( "transform" );  // hide under parent button circle
+			}
+		}
+	<cc>// Decorate the activated button.</cc>
+	activatedButton.classList.add( "active" );
+</pre></figure>
+
+<p>The next part determines the ring number and the position of the activated button, relative to the context menu center, in SVG coordinates:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	<cc>// Find layout ring number and SVG position (xp, yp) of the activated button.</cc>
+	<cc>// HTML coordinates cannot be used if SVG is scaled with width/height attributes.</cc>
+	let ring = 0 , group = activatedButtonCircle, xp = 0, yp = 0 ;
+	while ( group = group.parentNode.closest( "g" )) {
+		ring += 1 ;
+		<cc>// Extract the CSS transform=translate values</cc>
+		const { x, y } = group.getAttribute( "transform" ).match( new RegExp( "translate\\((?<x>[\\d-]+),(?<y>[\\d-]+)\\)")).groups ;
+		xp += +x ;
+		yp += +y ;
+		}
+</pre></figure>
+
+<p>The ring number will be used to determine the radius of the layout ring for the child buttons:</p>
+
+<figure class="figure"><figcaption>Positioning child buttons</figcaption>
+<object type="text/svg+xml" data="fig-002.svg"></object>
+</figure>
+
+<p>Here are the formulas:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	<cc>// Activated button angle</cc>
+	const φ = Math.atan( yp / xp ) / Math.PI * 180;
+	<cc>// Radius of layout circle for child buttons</cc>
+	let r = Math.round( r0 + ring * D );
+	<cc>// Angle between child buttons</cc>
+	let δ = Math.atan( D / r ) / Math.PI * 180;
+	<cc>// Number of child buttons</cc>
+	const m = activatedButton.children.length - 2 ;  <cc>// subtract circle and text</cc>
+</pre></figure>
+
+<p>If there are too many child buttons, the layout ring radius must be calculated differently:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	<cc>// Enlarge radius if there are too many buttons</cc>
+	if ( m * δ > 360 ) {
+		δ = 360 / m ;
+		r = D / 2 / Math.sin (δ / 2) ;
+		}
+</pre></figure>
+
+<p>Then the child buttons can be positioned:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	<cc>// Angle of first child button</cc>
+	let α = φ - δ * (m - 1) / 2 ;
+	<cc>// Position child buttons on the layout ring r</cc>
+	for ( let i = 0 ; i < m ; i += 1 , α += δ ) {
+		<cc>// Note that translate values are relative to the parent button</cc>
+		const x = Math.round( r * Math.cos( α / 180 * Math.PI ) - xp );
+		const y = Math.round( r * Math.sin( α / 180 * Math.PI ) - yp );
+		const button = activatedButton.children[ i ];
+		<cc>// Move button into position</cc>
+		button.setAttribute( "transform", `translate(${ x },${ y })` );
+		}
+	}
+</pre></figure>
+
+<figure class="listing"><figcaption> Button with children</figcaption><pre>
+theContextMenu.addEventListener( "<hi>click</hi>" , evt => {
+	if ( evt.target.hasAttribute( "<hi>data-close-menu</hi>" )) theContextMenu.<hi>hidePopover</hi>( );
+	} ) ;
+</pre></figure>
+
+<p>The child buttons are currently hidden under their parent button and must be positioned on the next outer layout circle. The following calculations have to be made:</p>
+
+<!--h4--Exposing Child Buttons--></div>
+
+<p>Here is the live demo:</p>
+
+<figure class="demo"><figcaption>Positioning and ring 2 distribution (<a href="study-02.htm" target="_blank">Study 2</a>)</figcaption>
+<iframe class="content-height-observed" src="study-02.htm" style="min-height:160px"></iframe>
+</figure>
+
+<!--h3--Study 2: Ring 2 Distribution and Closing--></div>
+
+<h3 cbc>Study 3: Checkbox Functionality</h3><div>
+
+<p>A checkbox button has a "checkbox" classname:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;g&gt;
+	&lt;g&gt;&lt;circle r="45" class="<hi>checkbox</hi>" title="Option 1"/&gt;&lt;text&gt;A&lt;/text&gt;&lt;/g&gt;
+	&lt;g&gt;&lt;circle r="45" class="checkbox" title="Option 2"/&gt;&lt;text&gt;B&lt;/text&gt;&lt;/g&gt;
+	&lt;g&gt;&lt;circle r="45" class="checkbox" title="Option 3"/&gt;&lt;text&gt;C&lt;/text&gt;&lt;/g&gt;
+	&lt;circle r="45" title="Save" /&gt;&lt;text&gt;6&lt;/text&gt;
+	&lt;/g&gt;
+</pre></figure>
+
+<p>A click on a checkbox button should not close the context menu, because the user might want to toggle other checkboxes as well:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+contextMenu.addEventListener( "<hi>click</hi>" , evt => {
+	if ( evt.target.classList.contains( "<hi>checkbox</hi>" )) {
+		evt.target.parentElement.classList.toggle( "<hi>active</hi>" );
+		return ;
+		}
+</pre></figure>
+
+<p>Therefore, the context menu must be closed with a left-click outside the menu:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+contextMenuContainer.addEventListener( "toggle" , evt => {
+	if ( evt.newState === "<hi>closed</hi>" ) <hi>resetMenu</hi>( );
+	} ) ;
+</pre></figure>
+
+<p><tt>resetMenu()</tt> removes all <tt>transform</tt> attributes and <tt>active</tt> class names:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+function resetMenu ( ) {
+	for ( const button of contextMenu.querySelectorAll( "g" )) {
+		button.removeAttribute( "transform" );
+		button.classList.remove( "active" );
+		}
+	}
+</pre></figure>
+
+<p>NOTE that a right-click event has <tt>newState==="open"</tt>, therefore a right-click can be used to re-position the entire context menu without changing its state.</p>
+
+<!--h3--Study 3: Checkbox Functionality--></div>
+
+<!--h2--Studies--></div>
+
+</body></html>

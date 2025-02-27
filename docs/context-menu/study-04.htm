@@ -1,0 +1,211 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-03" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-03" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<script type="module" src="/inc/webcat/page-structure/demo-page.js" ></script>
+
+<meta name="categories" content="Programming > Web Technologies" />
+<meta name="tags" content="study, circular, context, menu, checkbox" />
+<title>Circular Context Menu Study (Projects > SVG Editor > Context Menu)</title>
+<meta name="description" content="Explores checkbox button functionality in circular context menus." />
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>Circular Context Menu Study</h1>
+<p class="subtitle">Checkbox functionality</p>
+</div>
+
+<style id="styleContextMenu">
+div#contextMenuContainer { 
+	border : 1px none silver ;
+	width : 32px ;
+	height : 32px ;
+	overflow : visible ;
+	}
+#contextMenu {
+	overflow : visible ;
+	}
+#contextMenu circle {
+	stroke : black ;
+	stroke-width : 4px ;
+	fill : white ;
+	}
+#contextMenu g:not(.disabled) > circle:hover {
+	stroke : darkorange ;
+	}
+#contextMenu g.active > circle {
+	stroke : darkorange ;
+	fill : #ffe9cf ;
+	}
+#contextMenu g.disabled > circle {
+	stroke : silver ;
+	}
+#contextMenu text {
+	font-family : "Segoe UI", Tahoma, Geneva, Verdana, sans-serif ;
+	font-size : 60px ;
+	dominant-baseline : central ;
+	text-anchor : middle ;
+	stroke : none ;
+	fill : black ;
+	pointer-events : none ;
+	}
+#contextMenu g.active > text {
+	fill : darkorange ;
+	}
+#contextMenu g.disabled > text {
+	fill : silver ;
+	}
+</style>
+
+<div id="contextMenuContainer" popover>
+	<svg id="contextMenu" viewBox="-50,-50,100,100" width="32" height="32">
+	<g>
+		<g><circle r="45" title="Open" /><text>1</text></g>
+		<g><circle r="45" title="Save" /><text>2</text></g>
+		<g><circle r="45" title="Save" /><text>3</text></g>
+		<g><circle r="45" title="Save" /><text>4</text></g>
+		<g><circle r="45" title="Save" /><text>5</text></g>
+		<g>
+			<g><circle r="45" class="checkbox" title="Option 1"/><text>A</text></g>
+			<g><circle r="45" class="checkbox" title="Option 2"/><text>B</text></g>
+			<g><circle r="45" class="checkbox" title="Option 3"/><text>C</text></g>
+			<circle r="45" title="Save" /><text>6</text>
+			</g>
+		<g><circle r="45" title="Save" /><text>7</text></g>
+		<g>
+			<g><circle r="45" title="View"/><text>B</text></g>
+			<g><circle r="45" title="Edit"/><text>C</text></g>
+			<g><circle r="45" title="Create" /><text>D</text></g>
+			<circle r="45" title="Save" /><text>8</text>
+			</g>
+		<!-- Subordinate buttons must precede the circle element because of z-order -->
+		<circle r="45" title="File"/><text>A</text>
+		</g>
+	<g><circle r="45"><title>View</title></circle><text>B</text></g>
+	<g><circle r="45"><title>Edit</title></circle><text>C</text></g>
+	<g><circle r="45"><title>Create</title></circle><text>D</text></g>
+	<g><circle r="45"><title>Arrange</title></circle><text>E</text></g>
+	<g><circle r="45"><title>Help</title></circle><text>F</text></g>
+	</svg></div>
+
+<script id="scriptContextMenu" type="module">
+
+// Determine geometric base values
+const buttons = contextMenu.children ;
+const f = 1.4 ;  // Space between buttons
+const D = 2 * buttons[ 0 ].lastElementChild.previousElementSibling.getAttribute( "r" ) * f ;  // Distance between buttons
+console.debug( "D:" , D );
+const n = buttons.length ;  // Number of buttons
+const φ = 360 / n ;  // Angle between two buttons on the first layout circle
+const r0 = D / 2 / Math.sin( φ / 360 * Math.PI ) ;  // Radius of the first layout circle
+
+// Add event listeners
+document.addEventListener( "contextmenu" , evt => {
+	// SVG contextmenu event handler
+	evt.preventDefault( );
+	console.debug( evt.pageX, evt.pageY );
+	contextMenuContainer.showPopover( );
+	// Position dialog to mouse event location
+	const { width, height } = contextMenu.getBoundingClientRect( );
+	contextMenuContainer.style.marginLeft = evt.pageX - width / 2 + "px" ;
+	contextMenuContainer.style.marginTop = evt.pageY - height / 2 + "px" ;
+	// Place the level 0 buttons on the innermost layout circle
+	for ( let i = 0, angle = 0 ; i < n ; i += 1 , angle += φ ) {
+		const button = buttons[ i ] ;
+		const x = Math.round( r0 * Math.sin( angle / 180 * Math.PI ));
+		const y = Math.round( - r0 * Math.cos( angle / 180 * Math.PI ));
+		button.setAttribute( "data-position", `${x}, ${y}, ${angle}` );
+		const s = `translate(${ x },${ y })` ;
+		button.setAttribute( "transform", s );
+		}
+	} ) ;
+contextMenuContainer.addEventListener( "toggle" , evt => {
+	if ( evt.newState === "closed" ) resetMenu( );
+	} ) ;
+function showChildButtons( activatedButtonCircle ) {
+	// Bail out if the button is already active
+	const activatedButton = activatedButtonCircle.parentElement ;
+	if ( activatedButton.classList.contains( "active" )) return ;
+	// Deactivate active sibling button and hide its children
+	const activeSibling = activatedButton.parentElement.querySelector( ".active" );
+	if ( activeSibling ) {
+		activeSibling.classList.remove( "active" );
+		for ( const button of activeSibling.querySelectorAll( "[transform]" )) {
+			button.classList.remove( "active" );
+			button.removeAttribute( "transform" );  // hide under parent button circle
+			}
+		}
+	// Decorate the activated button.
+	activatedButton.classList.add( "active" );
+	// Find layout ring number and SVG position (xp, yp) of the activated button.
+	// HTML coordinates cannot be used if SVG is scaled with width/height attributes.
+	let ring = 0 , group = activatedButtonCircle, xp = 0, yp = 0 ;
+	// TODO: Ascending and counting should use parentElement.tagName
+	while ( group = group.parentNode.closest( "g" )) {
+		ring += 1 ;
+		// Extract the CSS transform=translate values
+		const { x, y } = group.getAttribute( "transform" ).match( new RegExp( "translate\\((?<x>[\\d-]+),(?<y>[\\d-]+)\\)")).groups ;
+		xp += +x ;
+		yp += +y ;
+		}
+	// Activated button angle 
+	const φ = Math.atan( yp / xp ) / Math.PI * 180;
+	// Radius of layout circle for child buttons
+	let r = Math.round( r0 + ring * D );
+	// Angle between child buttons
+	let δ = Math.atan( D / r ) / Math.PI * 180;
+	// Number of child buttons
+	const m = activatedButton.children.length - 2 ;  // subtract circle and text
+	// Enlarge radius if there are too many buttons
+	if ( m * δ > 360 ) {
+		δ = 360 / m ;
+		r = D / 2 / Math.sin (δ / 2) ;
+		}
+	// Angle of first child button
+	let α = φ - δ * (m - 1) / 2 ;
+	// Position child buttons on the layout ring r
+	for ( let i = 0 ; i < m ; i += 1 , α += δ ) {
+		// Note that translate values are relative to the parent button
+		const x = Math.round( r * Math.cos( α / 180 * Math.PI ) - xp );
+		const y = Math.round( r * Math.sin( α / 180 * Math.PI ) - yp );
+		const button = activatedButton.children[ i ];
+		// Add position attribute for debugging purposes
+		button.setAttribute( "data-position", `${x}, ${y}, ${α}` );
+		console.debug( "Position:" , button.getAttribute( "data-position" ));
+		// Move button into position
+		button.setAttribute( "transform", `translate(${ x },${ y })` );
+		}
+	}
+function resetMenu ( ) {
+	for ( const button of contextMenu.querySelectorAll( "g" )) {
+		button.removeAttribute( "transform" );
+		button.classList.remove( "active" );
+		}
+	}
+contextMenu.addEventListener( "click" , evt => {
+	if ( evt.target.classList.contains( "checkbox" )) {
+		evt.target.parentElement.classList.toggle( "active" );
+		return ;
+		}
+	else if ( ! evt.target.previousElementSibling ) {
+		resetMenu( );
+		contextMenuContainer.hidePopover( );
+		}
+	else if ( evt.target.tagName === "circle") {
+		showChildButtons( evt.target );
+		}
+	} ) ;
+</script>
+
+</body></html>

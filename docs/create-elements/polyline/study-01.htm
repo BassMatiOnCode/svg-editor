@@ -1,0 +1,92 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-16" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-16" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<!--
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<cript type="module" src="/inc/webcat/page-structure/demo-page.js" ></cript>
+-->
+
+<style id="styleTheDocumet">
+#theDocument { border : 1px solid silver }
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Creating Elements" />
+<meta name="tags" content="project, SVG, editor, create, element, study, construction, polyline" />
+<title>Creating Polygons (Projects > SVG Editor > Creating Elements)</title>
+<meta name="description" content="This study demonstrates how to create SVG ployline elements." />
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>Study: Creating Polylines</h1>
+<p>Click to set points, right-click to finish</p>
+</div>
+
+<svg id="theDocument" viewBox="-150,-150,300,300" width="300" height="300">
+</svg>
+
+<script id="scriptCreateEllipses" type="module">
+/*	
+ */
+
+let polygon = undefined , points = ""  ;
+let strokeColor = "blue" ;
+let strokeWidth = "1" ;
+function createPolyline( evt ) {
+	let pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	pt = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	pt.x = Math.round( pt.x );
+	pt.y = Math.round( pt.y );
+	points += `${ pt.x },${ pt.y }` ;
+	polygon = document.createElementNS( theDocument.namespaceURI, "polyline" );
+	polygon.setAttribute( "fill", "none");
+	polygon.setAttribute( "stroke", "black");
+	polygon.setAttribute( "stroke-width" , "1" );
+	polygon.setAttribute( "points", points );
+	updateSegment( evt );
+	theDocument.append( polygon );
+	theDocument.removeEventListener( "click" , createPolyline );
+	theDocument.addEventListener( "mousemove" , updateSegment );
+	theDocument.addEventListener( "click" , addPoint ) ;
+	theDocument.addEventListener( "contextmenu" , finishPolygon );
+	}
+function updateSegment( evt ) {
+	let pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	pt = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	pt.x = Math.round( pt.x );
+	pt.y = Math.round( pt.y );
+	polygon.setAttribute( "points", points +  ` ${ pt.x },${ pt.y }` );
+	}
+function addPoint( evt ) {
+	updateSegment( evt );
+	points = polygon.getAttribute( "points" );
+	}
+function finishPolygon( evt ) {
+	evt.preventDefault( );
+	if ( includeFinalPoint.checked ) addPoint( evt );
+	polygon.setAttribute( "points", points );
+	polygon.setAttribute( "stroke", strokeColor );
+	polygon.setAttribute( "stroke-width", strokeWidth );
+	points = "" ;
+	theDocument.removeEventListener( "click" , addPoint );
+	theDocument.removeEventListener( "mousemove" , updateSegment );
+	theDocument.removeEventListener( "contextmenu" , finishPolygon );
+	theDocument.addEventListener( "click" , createPolyline );
+	}
+theDocument.addEventListener( "click" , createPolyline );
+</script>
+<p><label><input id="includeFinalPoint" type="checkbox" checked="1" /> Include final point</label></p>
+</body></html>

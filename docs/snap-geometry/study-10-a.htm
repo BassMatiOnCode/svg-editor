@@ -1,0 +1,199 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-25" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-25" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<!--
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<cript type="module" src="/inc/webcat/page-structure/demo-page.js" ></cript>
+-->
+
+<style id="stylesForContainerDocument">
+div#messageBox { border : 1px solid silver }
+</style>
+
+<style id="stylesForSVGDocument">
+#theDocument { border : 1px solid silver }
+#theDocument .snap-overlay { display : none ; opacity : 0.7 }
+#theDocument.snap-vertex .snap-overlay.vertex { display : initial }
+#theDocument.snap-center .snap-overlay.center { display : initial }
+#theDocument.snap-midpoint .snap-overlay.mid { display : initial }
+#theDocument.snap-stroke .snap-overlay.stroke { display : initial }
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Snap to Geometry" />
+<meta name="tags" content="project, SVG, editor, create, element, study, element, geometry, snap" />
+<title>Study 10: Snap to Stroke Improvements 2 (Projects > SVG Editor > Snap and Glue)</title>
+<meta name="description" content="This study explores coarse samples proximity problems, and their solution." />
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>10: Snap to Stroke Improvements 2</h1><p class="subtitle">Sample Proximity Problems</p>
+</div>
+
+<svg id="theDocument" class="snap-stroke" viewBox="-170,-150,300,300" width="300" height="300" style="touch-action:none">
+
+<rect id="r-001" x="-150" y="-40" width="80" height="60" stroke="black" stroke-width="1" fill="white" ></rect>
+<rect class="snap-overlay stroke" data-for="r-001" x="-150" y="-40" width="80" height="60" stroke="transparent" stroke-width="12" fill="none" ></rect>
+<circle class="snap-overlay center point" data-for="r-001" cx="-110" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" data-for="r-001" cx="-150" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" data-for="r-001" cx="-70" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" data-for="r-001" cx="-70" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" data-for="r-001" cx="-150" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" data-for="r-001" cx="-110" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" data-for="r-001" cx="-70" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" data-for="r-001" cx="-110" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" data-for="r-001" cx="-150" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+
+<circle r="25" id="c-001" stroke="silver" stroke-width="1" fill="none" transform="translate(25,15)" ></circle>
+<circle class="snap-overlay stroke" data-for="c-001" cx="25" cy="15" r="25" stroke="transparent" stroke-width="12" fill="none" ></circle>
+<circle class="snap-overlay center point" data-for="c-001" cx="25" cy="15" r="20" stroke="none" fill="#dbd" ></circle>
+
+<polyline points="30 -30, -15 -100, 30 -120, -30 90, 50 110, -50 -120" stroke="grey" fill="none"></polyline>
+<polyline class="snap-overlay stroke" points="30 -30, -15 -100, 30 -120, -30 90, 50 110, -50 -120" stroke="transparent" stroke-width="15" fill="none"></polyline>
+
+<path id="auxiliaryPointer" d="M 0 -1 v -4 M 1 0 h 4 M 0 1 v 4 M -1 0 h -4" stroke="black" stroke-width="1" fill="none" pointer-events="none"></path>
+</svg>
+
+<div id="snapToGeometryDialog" style="user-select:none">
+<label><input id="checkSnapCenter" type="checkbox" />center</label> 
+<label><input id="checkSnapVertex" type="checkbox" />vertex</label> 
+<label><input id="checkSnapMidPoint" type="checkbox" />mid point</label> 
+<label><input id="checkSnapStroke" type="checkbox" checked="checked"/>stroke</label> 
+</div>
+
+<div id="messageBox" style="min-height:30px ; max-height:100px ; margin-right:1px ; overflow-y:scroll"></div>
+
+<script id="theScript" type="module">
+let t1sum = 0;
+let t1avg = 0;
+function add( n ) { t1sum = t1sum - t1avg + n; return t1avg = t1sum / 25 }
+
+// - - - Track pointer functionality
+function trackPrimaryPointer ( evt ) {
+	// Move the auxiliary pointer to the position of the primary pointer
+	let point = theDocument.createSVGPoint( );
+	point.x = evt.clientX ;
+	point.y = evt.clientY ;
+	point = point.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	auxiliaryPointer.setAttribute( "transform", `translate( ${ Math.round( point.x ) },${ Math.round( point.y ) } )` );
+	} 
+theDocument.addEventListener( "pointermove" , trackPrimaryPointer );
+// - - - Track path functionality
+const coarseScan = { 
+	points : [ ] ,  // Samples from a snap-overlay stroke path
+	} ;
+const coarseScanPointDistance = 10 ;
+// Event handlers for snap-stroke overlays
+for ( const o of theDocument.querySelectorAll( ".snap-overlay.stroke" )) {
+	o.addEventListener( "pointerenter", evt => { 
+		if ( coarseScan.target !== evt.target ) {
+			coarseScan.target = evt.target ;
+			// Calculate parameters for the scan
+			const pathLength = coarseScan.target.getTotalLength( );
+			const n = pathLength / coarseScanPointDistance | 0 ;
+			coarseScan.pointDistance = pathLength / n ;
+			coarseScan.points.length = 0 ;
+			// First point at pointDistance / 2
+			for ( let position = coarseScan.pointDistance / 2, i = 0 ; i < n ; i += 1 , position += coarseScan.pointDistance ) {
+				const p = coarseScan.target.getPointAtLength( position );
+				p.position = position ;
+				coarseScan.points.push( p );
+				}
+			}
+		// Exchange the pointer tracker
+		theDocument.removeEventListener( "pointermove" , trackPrimaryPointer );
+		evt.target.addEventListener( "pointermove" , trackSnapPath );
+		} ) ;
+	o.addEventListener( "pointerleave", evt => { 
+		// Restore the primary pointer tracker
+		theDocument.addEventListener( "pointermove" , trackPrimaryPointer );
+		evt.target.removeEventListener( "pointermove" , trackSnapPath );
+		} ) ;
+	}
+function trackSnapPath ( evt ) {
+	// Configuration
+	const candidateListLength = 5 ;
+	const numFineScanSamples = 10 ;  // must be even
+	// Determine pointer coordinates
+	let pointer = theDocument.createSVGPoint( );
+	pointer.x = evt.clientX ;
+	pointer.y = evt.clientY ;
+	pointer = pointer.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	// Coarse scan: Find the best n candidates
+	// TODO: P	erformance measurement and optimization
+	// Is it better to sort once at the end and then drop all except the n best results?
+	const t1 = performance.now();
+	let distance = Number.MAX_VALUE ;
+	const candidates = [ ] ;
+	for ( const p of coarseScan.points ) {
+		// Collect points with the smallest distance to the pointer 
+		const d = Math.sqrt( ( pointer.x - p.x) ** 2 + ( pointer.y - p.y ) ** 2 );
+		if ( d < distance ) {
+			candidates.push( { point : p , distance : d } );
+			if ( candidates.length > candidateListLength ) {
+				candidates.sort( (a, b) => { return a.distance - b.distance } );
+				candidates.length -= 1 ;
+				distance = candidates[ candidateListLength - 1 ].distance ;
+		}	}	}
+	console.debug( "Duration:" , add( performance.now( ) - t1 ));
+
+	// Fine scan the n best candidates
+	distance = Number.MAX_VALUE ;
+	let point = undefined ;
+	for ( const candidate of candidates ) {
+		if ( ! candidate.point.fineScan ) {
+			// Compile the fine scan list
+			candidate.point.fineScanList = [ ] ;
+			const pointDistance = coarseScan.pointDistance / 10 ;
+			for ( let position = candidate.point.position - numFineScanSamples / 2 * pointDistance, i = 0 ; i < numFineScanSamples ; i += 1 , position += pointDistance ) {
+				if ( i !== numFineScanSamples / 2 ) candidate.point.fineScanList.push( coarseScan.target.getPointAtLength( position ));
+				}
+			}
+		// Search the point of smallest distance
+		for ( const p of candidate.point.fineScanList ) {
+			const d = Math.sqrt(( p.x - pointer.x ) ** 2 + ( p.y - pointer.y ) ** 2 );
+			if ( d < distance ) { distance = d ; point = p }
+			}
+		}
+	// Move the auxiliary pointer to the result point
+	auxiliaryPointer.setAttribute( "transform", `translate( ${ Math.round( point.x ) },${ Math.round( point.y ) } )` );
+	}
+// - - - Snap to point functionality
+for ( const o of theDocument.querySelectorAll( ".snap-overlay.point" )) {
+	o.addEventListener( "pointerenter" , evt => {
+		// Pin aux pointer to center of the snap point
+		console.debug( "Pointer enter", `${evt.target.className.baseVal} for ${evt.target.getAttribute("data-for")}` );
+		theDocument.removeEventListener( "pointermove" , trackPrimaryPointer );
+		auxiliaryPointer.setAttribute( "transform", `translate( ${ evt.target.cx.baseVal.value },${ evt.target.cy.baseVal.value } )` );
+		} ) ;
+	o.addEventListener( "pointerleave" , evt => {
+		// Make aux pointer follow the primary pointer again
+		console.debug( "Pointer leave", `${evt.target.className.baseVal} for ${evt.target.getAttribute("data-for")}` );
+		theDocument.addEventListener( "pointermove" , trackPrimaryPointer );
+		trackPrimaryPointer( evt );
+		} ) ;
+	}
+// - - - Other functionality
+theDocument.addEventListener( "pointerdown", evt => {
+	// Log position of the auxiliary pointer to the message box 
+	const matrix = auxiliaryPointer.transform.baseVal.consolidate().matrix ;
+	console.debug( "Aux position used:", `${ matrix.e } ${ matrix.f } for ${evt.target.getAttribute("data-for")}` );
+	const text = document.createTextNode( `Aux position used: ${ matrix.e } ${ matrix.f } for ${evt.target.getAttribute("data-for")}` );
+	messageBox.prepend( document.createElement( "BR" ));
+	messageBox.prepend( text );
+	} ) ;
+checkSnapCenter.addEventListener( "change" , ( ) => theDocument.classList.toggle( "snap-center" )) ;
+checkSnapMidPoint.addEventListener( "change" , ( ) => theDocument.classList.toggle( "snap-midpoint" )) ;
+checkSnapVertex.addEventListener( "change" , ( ) => theDocument.classList.toggle( "snap-vertex" )) ;
+checkSnapStroke.addEventListener( "change" , ( ) => theDocument.classList.toggle( "snap-stroke" )) ;
+</script>
+</body></html>

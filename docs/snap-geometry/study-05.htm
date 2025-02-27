@@ -1,0 +1,74 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-23" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-23" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<!--
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<cript type="module" src="/inc/webcat/page-structure/demo-page.js" ></cript>
+-->
+
+<style id="styleTheDocument">
+#theDocument { border : 1px solid silver }
+#theDocument .snap-overlay { display : none }
+#theDocument.snap-vertex .snap-overlay.vertex { display : initial }
+#theDocument.snap-center .snap-overlay.center { display : initial }
+#theDocument.snap-midpoint .snap-overlay.midpoint { display : initial }
+#theDocument.snap-stroke .snap-overlay.stroke { display : initial }
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Snap to Geometry" />
+<meta name="tags" content="project, SVG, editor, create, element, study, element, geometry, snap" />
+<title>Study 5: Detecting Geometry (Projects > SVG Editor > Snap and Glue)</title>
+<meta name="description" content="This study investigates pointerenter and pointerleave events." />
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>Study 5: Detecting Geometry</h1>
+</div>
+
+<svg id="theDocument" class="snap-vertex snap-midpoint snap-center snap-stroke" viewBox="-170,-150,300,300" width="300" height="300" style="touch-action:none">
+
+<path d="M -5 0 h 10 m -5 -5 v 10" stroke="black" stroke-width="1" fill="none"></path>
+<rect id="r-001" x="-150" y="-40" width="80" height="60" stroke="black" stroke-width="1" fill="white" ></rect>
+	<rect class="snap-overlay stroke" data-for="r-001" x="-150" y="-40" width="80" height="60" stroke="transparent" stroke-width="12" fill="none" ></rect>
+<circle class="snap-overlay center" data-for="r-001" cx="-110" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex" data-for="r-001" cx="-150" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex" data-for="r-001" cx="-70" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex" data-for="r-001" cx="-70" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex" data-for="r-001" cx="-150" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay midpoint" data-for="r-001" cx="-110" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay midpoint" data-for="r-001" cx="-70" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay midpoint" data-for="r-001" cx="-110" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay midpoint" data-for="r-001" cx="-150" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+
+<circle r="25" id="c-001" stroke="black" stroke-width="1" fill="none" transform="translate(25,15)" ></circle>
+<circle class="snap-overlay stroke" data-for="c-001" r="25" stroke="transparent" stroke-width="12" fill="none" transform="translate(25,15)" ></circle>
+<circle class="snap-overlay center" data-for="c-001" r="5" stroke="none" fill="#dbd" transform="translate(25,15)" ></circle>
+
+</svg>
+
+<script id="theScript" type="module">
+for ( const o of theDocument.querySelectorAll( ".snap-overlay" )) {
+	/*
+	o.addEventListener( "pointerenter" , evt => {
+		console.debug( "Pointer enter", `${evt.target.className.baseVal} for ${evt.target.getAttribute("data-for")}` );
+		} ) ;
+	o.addEventListener( "pointerleave" , evt => {
+		console.debug( "Pointer leave", `${evt.target.className.baseVal} for ${evt.target.getAttribute("data-for")}` );
+		} ) ;
+		*/
+	o.addEventListener( "pointerdown", evt => {
+		console.debug( "Snap overlay selected:", `${evt.target.className.baseVal} for ${evt.target.getAttribute("data-for")}` );
+		} ) ;
+	}
+</script>
+</body></html>

@@ -1,0 +1,18 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="-50 -50 100 100" width="100" height="100" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="white" style="border:1px solid silver">
+<title>Drawing</title>
+<style>
+	text {
+		text-anchor : middle ;
+		dominant-baseline : central ;
+		stroke : none ;
+		fill : black ;
+		font-size : 65px ;
+		font-family : verdana ;
+		}
+	circle {
+		stroke-width : 6px ;
+		}
+	</style>
+<circle r="45"></circle>
+<text>C</text>
+</svg>

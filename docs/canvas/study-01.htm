@@ -1,0 +1,63 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-01-11" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-01-11" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<script type="module" src="/inc/webcat/page-structure/demo-page.js" ></script>
+
+<style id="styleToolbars">
+.tool-bar {
+	xheight : 32px ;
+	position : absolute ;
+	}
+.tool-bar[data-dock="top"] {
+	border-bottom : 1px solid silver;
+	left : 0px ;
+	right : 0px ;
+	top : 0px ;
+	}
+.tool-bar[data-dock="bottom"] {
+	border-top : 1px solid silver;
+	left : 0px ;
+	right : 0px ;
+	bottom : 0px ;
+	}
+</style>
+<style id="styleCanvas">
+div.canvas {
+	background-color : antiquewhite ;
+
+	}
+</style>
+
+<script id="scriptMouseMonitor" type="module">
+document.addEventListener( "mousemove" , evt => {
+	monitorMouseX.textContent = evt.pageX ;
+	monitorMouseY.textContent = evt.pageY ;
+	} ) ;
+</script>
+
+<meta name="categories" content="Programming > Web Technologies" />
+<meta name="tags" content="demo" />
+<title> (Web Technologies > )</title>
+<meta name="description" content="Explores a window with toolbars. Problem here: The canvas box needs to fill the space between toolbars, and the toolbar size can change dynamically. We might need flexbox or grid layout." />
+
+</head><body>
+<div class="tool-bar" data-dock="top">Main toolbar</div>
+
+<div class="canvas"></div>
+
+<div class="tool-bar" data-dock="bottom">
+<span id="monitorMouseX"></span>
+<span id="monitorMouseY"></span>
+</div>
+</body></html>

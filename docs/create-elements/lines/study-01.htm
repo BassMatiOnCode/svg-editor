@@ -1,0 +1,87 @@
+﻿
+ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-14" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-14" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<xxxlink rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<xxxscript type="module" src="/inc/webcat/page-structure/demo-page.js" ></xxxscript>
+
+<style id="styleTheDocumet">
+#theDocument {
+	border : 1px solid silver ;
+	}
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Creating Elements" />
+<meta name="tags" content="project, SVG, editor, create, element, study, construction, point" />
+<title>Creating Lines (Projects > SVG Editor > Creating Elements)</title>
+<meta name="description" content="This study demonstrates how to create SVG line elements from two consecutive clicks." />
+
+<!-- Observations
+1. Clicks outside the SVG root element are not recognized.
+2. GUI controls floating above the SVG root element might catch click events.
+-->
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>Study: Creating Lines</h1><p class="subtitle">How to create SVG lines elements with two consecutive clicks</p>
+</div>
+
+<svg id="theDocument" viewBox="-150,-150,300,300" width="300" height="300">
+</svg>
+
+<script id="scriptCreateCircles" type="module">
+let line = undefined ;
+let firstPoint = undefined ;
+let strokeColor = "blue" ;
+let strokeWidth = "1" ;
+function createLine( evt ) {
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	firstPoint = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	firstPoint.x = Math.round( firstPoint.x );
+	firstPoint.y = Math.round( firstPoint.y );
+	line = document.createElementNS( theDocument.namespaceURI, "line" );
+	if ( firstPoint.x !== 0 ) line.setAttribute( "x1", firstPoint.x );
+	if ( firstPoint.y !== 0 ) line.setAttribute( "y1", firstPoint.y );
+	 line.setAttribute( "x2", firstPoint.x );
+	 line.setAttribute( "y2", firstPoint.y );
+	line.setAttribute( "stroke", "black");
+	line.setAttribute( "stroke-width" , "1" );
+	theDocument.append( line );
+	theDocument.removeEventListener( "click" , createLine );
+	theDocument.addEventListener( "mousemove" , updateLine );
+	theDocument.addEventListener( "click" , finishLine );
+	}
+function updateLine( evt ) {
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	const secondPoint = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	secondPoint.x = Math.round( secondPoint.x );
+	secondPoint.y = Math.round( secondPoint.y );
+	line.setAttribute( "x2", secondPoint.x );
+	line.setAttribute( "y2", secondPoint.y );
+	}
+function finishLine ( evt ) { 
+	updateLine( evt );
+	line.setAttribute( "stroke", strokeColor );
+	line.setAttribute( "stroke-width", strokeWidth );
+	theDocument.removeEventListener( "mousemove" , updateLine );
+	theDocument.removeEventListener( "click" , finishLine );
+	theDocument.addEventListener( "click" , createLine );
+	} 
+theDocument.addEventListener( "click" , createLine );
+</script>
+</body></html>

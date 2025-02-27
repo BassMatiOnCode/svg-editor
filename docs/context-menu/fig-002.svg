@@ -1,0 +1,83 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="-25 -130 300 240" width="300" height="240" stroke="black" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill="white" style="border:1px none silver">
+<title>Distance between buttons</title>
+
+<defs>
+	<marker id="arrow" viewBox="-10 -10 20 20" refX="0" refY="0" markerWidth="20" markerHeight="20" orient="auto-start-reverse" stroke="grey">
+		<line x2="-10" y2="-7" />
+		<line x2="-10" y2="+7" />
+		</marker>
+	</defs>
+
+<style>
+g.textbox rect {
+	stroke : none ;
+	fill : white ;
+	}
+text {
+	stroke : white ;
+	stroke-width : 10px ;
+	fill : black ;
+	paint-order : stroke fill markers ;
+	font-size : 14px ;
+	text-anchor : middle ;
+	dominant-baseline : middle ;
+	}
+tspan {
+	stroke : none ;
+	}
+tspan.sub {
+	dominant-baseline : hanging ;
+	font-size : 12px ;
+	}
+	</style>
+
+
+<!-- Lines -->
+<path d="M 109 -51 A 120 120 60 0 1 98 +69" stroke="silver" stroke-dasharray="4" />
+<path d="M 164 -115 A 200 200 70 0 1 164 +115" stroke="silver" stroke-dasharray="4" />
+<line x1="-20" x2="230" stroke="silver" transform="rotate(-20)" />
+<line x1="-20" x2="230" stroke="silver" transform="rotate(+20)" />
+<line x1="+188" x2="+188" y1="-105" y2="+105" stroke="grey"/>
+<line x2="+188" stroke="silver" />
+
+<!-- Angles -->
+<path d="M 47 -17 A 50 50 40 0 1 47 +17" stroke="grey" />
+<g class="textbox" transform="translate(50,-1)">
+	<rect x="-6" y="-10" width="12" height="20" />
+	<text><tspan>φ</tspan><tspan class="sub">1</tspan></text>
+	</g>
+	
+<!-- Distance between buttons D -->
+<line x1="+160" x2="+250" y1="-68" y2="-68" stroke="grey" />
+<line x1="+160" x2="+250" y1="+68" y2="+68" stroke="grey" />
+<line x1="+240" x2="+240" y1="-68" y2="+68" stroke="grey" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+<text x="240">D</text>
+
+<!-- Radii -->
+<line x2="120" stroke="grey" transform="rotate(-20)" marker-end="url(#arrow)"/>
+<g class="textbox" transform="translate(80,-30)">
+	<rect x="-6" y="-10" width="12" height="20" />
+	<text><tspan>r</tspan><tspan class="sub">0</tspan></text>
+	</g>
+<line x2="200" stroke="grey" transform="rotate(-32)" marker-end="url(#arrow)"/>
+<g class="textbox" transform="translate(130,-80)">
+	<rect x="-7" y="-10" width="14" height="20" />
+	<text><tspan>r</tspan><tspan class="sub">1</tspan></text>
+	</g>
+<line x1="0" y1="0" x2="80" y2="0" transform="rotate(30) translate(120,0)" stroke="grey" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<text x="140" y="80">D</text>
+
+<!-- Level 1 button -->
+<circle cx="+120" r="20" fill="none"></circle>
+<circle cx="+120" r="3" fill="black" stroke="none"></circle>
+
+<!-- Level 2 buttons -->
+<circle cx="+188" cy="-68" r="20" fill="none"></circle>
+<circle cx="+188" cy="-68" r="3" fill="black" stroke="none"></circle>
+<circle cx="+188" cy="+68" r="20" fill="none"></circle>
+<circle cx="+188" cy="+68" r="3" fill="black" stroke="none"></circle>
+	
+<circle id="origin" r="5" />
+<text y="-15">O</text>
+
+</svg>

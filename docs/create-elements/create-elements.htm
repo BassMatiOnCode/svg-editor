@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-12-09" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-04" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-14" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/tutorial-page.css" />
+<script type="module" src="/inc/webcat/page-structure/tutorial-page.js" ></script>
+ 
+<meta name="categories" content="Projects > SVG Editor > Creating Elements" />
+<meta name="tags" content="HTML, JavaScript, CSS, SVG, element, documentation, studies" />
+<meta name="description" content="" />
+
+<title>Creating SVG Elements (Projects > SVG Editor > Studies > Creating Elements)</title>
+
+</head><body>
+
+<h1>Creating SVG Elements</h1><p class="subtitle">Circles, lines, rectangles, et cetera</p>
+
+<h2 cbc>Introduction</h2><div>
+
+<h3 cbc>Coordinate Transformation</h3><div>
+
+<p>Mouse event coordinates live in HTML space, points in the SVG document are in SVG space. So coordinates must be transformed. Therefore we can retrieve a coordinate transformation matrix (CTM), which has an <tt>inverse()</tt> method that can be used to perform the required transformation:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+const pt = document.getElementById( "canvas" ).createSVGPoint( );
+pt.x = evt.<hi>clientX</hi>;
+pt.y = evt.<hi>clientY</hi>;
+const point = pt.matrixTransform( document.getElementById( "canvas" ).<hi>getScreenCTM</hi>( ).<hi>inverse</hi>( ));
+console.debug( Math.round( evt.clientX ), Math.round( evt.clientY ), Math.round( point.x ), Math.round( point.y ));
+</pre></figure>
+
+<p>In the example above, <tt>canvas</tt> is the SVG root element, so the converted poiny coordinates can be used to create elements as child of the SVG parent. Alternatively, <tt>getScreenCTM()</tt> can be called on other elements, such as the group element in demo 1. Then the <tt>point</tt> coordinates are used to add elements to that group element, they are correct even if the group has a <tt>transform</tt> attribute.</p>
+
+<figure class="demo"><figcaption><a href="demo-01.htm" target="_blank">Demo 1</a></figcaption>
+<iframe class="content-height-observed" src="demo-01.htm"></iframe>
+</figure>
+
+<!--h3--Coordinate Transformation--></div>
+
+<h3 cbc>Snapping</h3><div>
+
+<p>Grid lines, guide lines, vertices and edges can be "magnetic" and pull on a new construction point when it is set down.</p>
+
+<!--h3--Snapping--></div>
+
+<h3 cbc>Grouping</h3><div>
+
+<p>The SVG <tt>g</tt> element can be used to group elements together. A <tt>g</tt> element is "passive", it does not have a visual representation and cannot receive mouse clicks.</p>
+
+<p>To create a group, geometric elements must be selected and then passed to the group elements command.</p>
+
+<p>All elements in a group are selected by selecting one of its elements. An element or group in a group is selected by selecting it twice, siblings are then de-selected. This allows to apply modifications to a specific object or a sub-group.</p>
+
+<p>It must be possible to add elements to an existing group (without having to re-create the group), and remove elements from a group.</p>
+
+<!--h3--Grouping--></div>
+
+<h3 cbc>Glueing</h3><div>
+
+<p>A glued element cannot be moved. Glueing might be coupled to snapping: If a construction point has been snapped by another object, it can also be glued. </p>
+
+<!--h3--Glueing--></div>
+
+<h3 cbc>Connection Points</h3><div>
+
+<p>Connection points can only appear in a group, because they are associated with a geometric object.</p>
+
+<p>Connection points cannot be scaled, they have always the same size. This is against the natural SVG behaviour. If a parent object is scaled, the affected connection points must be scaled inversely to maintain their size.</p>
+
+<!--h3--Connection Points--></div>
+
+<h3 cbc>Name</h3><div>
+
+<p>Elements can be named with the <tt>name</tt> attribute. Note that the name might not be unique in a document. The name is used to identify selected elements and may be shown id the GUI.</p>
+
+<p>The default name of a drawing object is identical to the tag name.</p>
+
+<!--h3--Name--></div>
+
+<h3 cbc>Construction Points</h3><div>
+
+<p>Points define the geometry of SVG elements. Points may be set by a click. When the requrired number of points have been set down, temporary points can be removed and the SVG element can be created.</p>
+
+<p>An alternative way is to create two points on a mouse-down event, and move the second point with the mouse pointer until the next mouse up event occurs.</p>
+
+<!--h3--Construction Points--></div>
+
+<h3 cbc>Touch and Stylus Events</h3><div>
+
+<p>After ~1 second, pointermove events stop coming in. The reason is that the event target element interprets the event as gesture (pan and/or pinch zoom). To prevent that, the SVG root element must get the CSS property setting <tt>touch-action:none</tt>.</p>
+
+<!--h3--Touch and Stylus Events--></div>
+
+<!--h2--Introduction--></div>
+
+<h2 cbc>Creating Circles</h2><div>
+
+
+<h3 cbc>Circle From Two Points</h3><div>
+
+<p>Two Points are necessary to define a circle, the center point, and a raidus definition point. These can be created in two ways:</p>
+
+<ol>
+<li>Two separate clicks. The first click creates a construction circle at the center point, the second click defines the radius. Attributes like fill and stroke are set on the second click.</li>
+<li>A drag operation: A construction circle is created on a mouse down event, then a modifiy command is run to change the radius dynamically to fit the pointer coordinates. The modification command is finished when the mouse button goes up again, then the final circle attributes are set.</li>
+</ol>
+
+<!--h3--Circle From Two Points--></div>
+
+<!--h2--Creating Circles--></div>
+
+
+<h2 cbc>Studies</h2><div>
+
+<h3 cbc>Study 3: Creating Circles</h3><div>
+
+<p></p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+
+</pre></figure>
+
+<!--h3--Demo 1--></div>
+
+<!--h2--Examples--></div>
+
+<h2 cbc>References</h2><div>
+
+<dl>
+<dt><a href=""></a></dt><dd>
+	<p></p>
+	</dd>
+</dl>
+
+<!--h2--Studies--></div>
+
+</body></html>

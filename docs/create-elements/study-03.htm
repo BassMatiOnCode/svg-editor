@@ -1,0 +1,61 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-14" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-14" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<script type="module" src="/inc/webcat/page-structure/demo-page.js" ></script>
+
+<style id="styleTheDocumet">
+#theDocument {
+	border : 1px solid silver ;
+	}
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Creating Elements" />
+<meta name="tags" content="project, SVG, editor, create, element, study, construction, point" />
+<title>Creating Construction Points (Projects > SVG Editor > Creating Elements)</title>
+<meta name="description" content="" />
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>Study: Creating Construction Points</h1><p class="subtitle">How to create construction points</p>
+</div>
+
+<svg id="theDocument" viewBox="-150,-150,300,300" width="300" height="300">
+</svg>
+
+<script id="scriptCreateCircles" type="module">
+const points = [ ] ;
+let strokeColor = "black" ;
+let strokeWidth = "1" ;
+let fillColor = "white" ;
+function createConstructionPoint( evt ) {
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	const centerpoint = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	points.push( centerpoint );
+	centerpoint.x = Math.round( centerpoint.x );
+	centerpoint.y = Math.round( centerpoint.y );
+	const circle = document.createElementNS( theDocument.namespaceURI, "circle" );
+	if ( centerpoint.x !== 0 ) circle.setAttribute( "cx", centerpoint.x );
+	if ( centerpoint.y !== 0 ) circle.setAttribute( "cy", centerpoint.y );
+	circle.setAttribute( "r", "10" );
+	circle.setAttribute( "stroke", strokeColor );
+	circle.setAttribute( "stroke-width", strokeWidth );
+	circle.setAttribute( "fill", fillColor );
+	theDocument.append( circle );
+	}
+theDocument.addEventListener( "click" , createConstructionPoint );
+</script>
+</body></html>

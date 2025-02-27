@@ -1,0 +1,111 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-01-11" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-01-11" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<script type="module" src="/inc/webcat/page-structure/demo-page.js" ></script>
+
+<style id="styleDocument">
+body {
+	margin : 0 ;
+	}
+</style>
+<style id="styleCanvas">
+body {
+	background-color : antiquewhite ;
+	overflow : scroll ;
+	}
+</style>
+<style id="styleMousePositionMonitor">
+div#mousePositionMonitor {
+	border : 1px solid silver ;
+	position : fixed ;
+	left : 10px ;
+	bottom : 10px ;
+	}
+</style>
+<script id="scriptMousePositionMonitor" type="module">
+document.addEventListener( "mousemove" , evt => {
+	mousePositionX.textContent = evt.pageX ;
+	mousePositionY.textContent = evt.pageY ;
+	} ) ;
+</script>
+<style id="styleViewBoxPanel">
+div#viewBoxPanel {
+	border : 1px solid silver ;
+	position : fixed ;
+	left : 130px ;
+	bottom : 10px ;
+	}
+div#viewBoxPanel input {
+	width : 3em ;
+	border : none ;
+	outline-style : none ;
+	background-color : transparent ;
+}
+div#viewBoxPanel input:not(:focus)::-webkit-outer-spin-button,
+div#viewBoxPanel input:not(:focus)::-webkit-inner-spin-button {
+	-webkit-appearance : none ;
+	-moz-appearance : textfield ;
+	margin-left : -10px ;
+	display:none ;
+	}
+</style>
+<script id="scriptViewBoxPanel" type="module">
+const [x, y, w, h] = canvas.getAttribute( "viewBox" ).split( "," ) ;
+viewBoxLeft.value = x ;
+viewBoxTop.value = y ;
+viewBoxWidth.value = w ;
+viewBoxHeight.value = h ;
+viewBoxPanel.addEventListener( "input" , evt => {
+	console.log( viewBoxWidth.value, viewBoxHeight.value );
+	canvas.setAttribute( "viewBox", `${viewBoxLeft.value},${viewBoxTop.value},${viewBoxWidth.value},${viewBoxHeight.value}` );
+	canvas.setAttribute( "width", `${viewBoxWidth.value * viewBoxZoom.value}` );
+	// canvas.setAttribute( "height", `${viewBoxHeight.value}` );
+	} ) ;
+</script>
+<script id="scriptDots">
+const points = [ ] ;
+document.addEventListener( "click" , evt => {
+	console.debug( evt.pageX, evt.pageY );
+	const dot = document.createElementNS( canvas.namespaceURI, "circle" );
+	dot.setAttribute( "cx" , evt.pageX );
+	dot.setAttribute( "cy" , evt.pageY );
+	dot.setAttribute( "r" , 5 );
+	dot.setAttribute( "fill", "red" );
+	canvas.children.layer0.append( dot );
+	} ) ;
+</script>
+
+<meta name="categories" content="Programming > Web Technologies" />
+<meta name="tags" content="demo" />
+<title> (Web Technologies > )</title>
+<meta name="description" content="Explores how to resize the canvas." />
+
+</head><body>
+
+<svg id="canvas" xmlns="http://www.w3.org/2000/svg" viewBox="0,0,500,200" width="500" xheight="200" style="border:1px solid black">
+<g id="layer0"></g>
+</svg>
+
+<div id="mousePositionMonitor">
+	<span id="mousePositionX">&nbsp;</span>
+	<span id="mousePositionY">&nbsp;</span>
+	</div>
+<div id="viewBoxPanel">
+	<input id="viewBoxLeft" type="number" step="10" />
+	<input id="viewBoxTop" type="number" step="10" />
+	<input id="viewBoxWidth" type="number" min="0" step="10" />
+	<input id="viewBoxHeight" type="number" min="0" step="10" />
+	<input id="viewBoxZoom" type="number" min="0" step="0.1" value="1" />
+	</div>
+</body></html>

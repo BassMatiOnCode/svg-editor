@@ -1,0 +1,81 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-14" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-14" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+
+<xxlink rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<xxlink rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<xxscript type="module" src="/inc/webcat/page-structure/demo-page.js" ></xxscript>
+
+<style id="styleTheDocument">
+#theDocument {
+	border : 1px solid silver ;
+	}
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Creating Elements" />
+<meta name="tags" content="project, SVG, editor, create, element, study, construction, point" />
+<title>Creating Circles (Projects > SVG Editor > Creating Elements)</title>
+<meta name="description" content="This study demonstrates how to create SVG circle elements from two consecutive clicks." />
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>Study: Creating Circles</h1><p class="subtitle">How to create SVG circle elements with two consecutive clicks</p>
+</div>
+
+<svg id="theDocument" viewBox="-150,-150,300,300" width="300" height="300">
+</svg>
+
+<script id="scriptCreateCircles" type="module">
+let circle = undefined ;
+let centerpoint = undefined ;
+let strokeColor = "blue" ;
+let strokeWidth = "1" ;
+let fillColor = "white" ;
+function createConstructionPoint( evt ) {
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	centerpoint = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	centerpoint.x = Math.round( centerpoint.x );
+	centerpoint.y = Math.round( centerpoint.y );
+	circle = document.createElementNS( theDocument.namespaceURI, "circle" );
+	if ( centerpoint.x !== 0 ) circle.setAttribute( "cx", centerpoint.x );
+	if ( centerpoint.y !== 0 ) circle.setAttribute( "cy", centerpoint.y );
+	circle.setAttribute( "stroke", "black");
+	circle.setAttribute( "stroke-width", "1");
+	circle.setAttribute( "fill", "none" );
+	circle.setAttribute( "r", "5" );
+	theDocument.append( circle );
+	theDocument.removeEventListener( "click" , createConstructionPoint );
+	theDocument.addEventListener( "mousemove" , updateCircle );
+	theDocument.addEventListener( "click" , finishCircle );
+	}
+function updateCircle( evt ) {
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	const radiuspoint = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	const radius = Math.sqrt(( radiuspoint.x - centerpoint.x ) ** 2 + ( radiuspoint.y - centerpoint.y ) ** 2 ) ;
+	circle.setAttribute( "r" , Math.round( radius ));
+	}
+function finishCircle ( evt ) { 
+	updateCircle( evt );
+	circle.setAttribute( "stroke", strokeColor );
+	circle.setAttribute( "stroke-width", strokeWidth );
+	circle.setAttribute( "fill", fillColor );
+	theDocument.removeEventListener( "click" , finishCircle );
+	theDocument.removeEventListener( "mousemove" , updateCircle );
+	theDocument.addEventListener( "click" , createConstructionPoint );
+	}
+theDocument.addEventListener( "click" , createConstructionPoint );
+</script>
+</body></html>

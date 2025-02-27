@@ -1,0 +1,91 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-16" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-16" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<!--
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<cript type="module" src="/inc/webcat/page-structure/demo-page.js" ></cript>
+-->
+
+<style id="styleTheDocumet">
+#theDocument { border : 1px solid silver }
+input { width : 3rch }
+input[type="number"] { width : 5rch }
+#gridProperties > div { display : none }
+#gridProperties.active > div { display : inline-block }
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Grid" />
+<meta name="tags" content="project, SVG, editor, create, element, study, construction, grid, skew" />
+<title>Skewed Grid (Projects > SVG Editor > Grid)</title>
+<meta name="description" content="This study demonstrates skewed grid lines" />
+
+</head><body>
+
+<!--
+SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function(elem) {
+    return elem.getScreenCTM().inverse().multiply(this.getScreenCTM());
+might be better solution
+};	
+-->
+
+
+<div class="hide-if-hosted">
+<h1>Study: Snap to Grid</h1>
+<p>A secondary pointer (crosshair) snaps to grid positions.</p>
+</div>
+
+<svg id="theDocument" viewBox="-150,-150,300,300" width="300" height="300" style="touch-action:none">
+<g id="skewedCS" fill="none" stroke="silver" stroke-width="1" transform="matrix(1 -0.2679 -0.2679 1 0 0)">
+	<path class="grid y" d="M -100 -135 v 270 m 25 0 v -270  m 25 0 v 270 m 25 0 v -270  m 25 0 v 270 m 25 0 v -270  m 25 0 v 270 m 25 0 v -270  m 25 0 v 270"></path>
+	<path display="block" class="grid x" d="M -135 -100 h 270 m 0 25 h -270 m 0 25 h 270 m 0 25 h -270 m 0 25 h 270 m 0 25 h -270 m 0 25 h 270 m 0 25 h -270 m 0 25 h 270"></path>
+	<line display="none" x1="0" y1="0" x2="25" y2="-25" stroke="black"></line>
+	</g>
+<path id="gridPointer" d="M -5 0 h 10 m -5 -5 v 10" stroke="black" stroke-width="1"></path>
+</svg>
+
+<div id="gridProperties" class="active"><button id="gridButton">Grid</button> <div>
+<label>dx: <input id="gridDX" type="text" size="4" value="10" /></label> 
+<label>dy: <input id="gridDY" type="text" size="4" value="10" /></label> 
+</div></div>
+
+<script id="theScript" type="module">
+
+// Grid line distance before transformation
+const dx = 25 , dy = 25 ;
+// Get conversion matrices
+const matrixA = skewedCS.getScreenCTM( ).inverse( );
+const matrixB = skewedCS.getCTM( );
+// Remove offset values
+matrixB.e = 0 ;
+matrixB.f = 0 ;
+
+function updateGridPointer ( evt ) {
+	// Updates the (secondary) gridPointer when the (primary) pointer moves
+	// Convert HTML coordinates to SVG coordinates
+	let point = theDocument.createSVGPoint( );
+	point.x = evt.clientX;
+	point.y = evt.clientY;
+	point = point.matrixTransform( matrixA );
+	// Snap to grid
+	point.x = Math.round( point.x / dx ) * dx ;
+	point.y = Math.round( point.y / dy ) * dy ;
+	// Convert to skewedCS coordinate system
+	point = point.matrixTransform( matrixB );
+	// Move the secondary pointer
+	gridPointer.setAttribute( "transform" , `translate( ${ point.x },${ point.y } )` );
+	}
+
+theDocument.addEventListener( "pointermove" , updateGridPointer );
+
+
+</script>
+</body></html>

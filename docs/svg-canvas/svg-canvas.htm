@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-12-09" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-01-24" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-01-24" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/tutorial-page.css" />
+<script type="module" src="/inc/webcat/page-structure/tutorial-page.js" ></script>
+ 
+<meta name="categories" content="Projects > SVG Editor > Canvas" />
+<meta name="tags" content="project, svg, editor, canvas, zoom, pan, size" />
+<meta name="description" content="" />
+
+<title>SVG Canvas Element (Projects > SVG Editor > Canvas)</title>
+
+</head><body>
+
+<h1>SVG Canvas Element</h1><p class="subtitle">Sizing, zooming, pannings</p>
+
+<h2 cbc>Introduction</h2><div>
+
+<!--h2--Introduction--></div>
+
+<p>The size of the SVG viewport is defined by its <tt>viewBox</tt> property with its components <tt>x</tt>, <tt>y</tt>, <tt>w</tt> and <tt>h</tt>. The SVG viewport is <em>scaled</em> to fit the element width (defined by the SVG element's <tt>width</tt> attribute). With a zoom factor of 1.0, <tt>viewBox.w</tt> equals the SVG element's <tt>width</tt>. For a zoom factor greater than 1, the width is scaled up. For a zoom factor smaller than 1, the width is scaled down accordingly. Note that the <tt>height</tt> property is left undefined, which ensures that the aspect ratio is kept at 1.0.</p>
+
+<p>While zooming, the viewport origin (0, 0) remains in its position, objects at a distance from the origin are move towards or away from the origin. It is desirable that a user-defined "focus" point remains fixed in position instead. This can be achieved by <em>panning</em> the document by a suitable amount, if possible. This is usually the case when zooming into the drawing.</p>
+
+<h2 cbc>Examples</h2><div>
+
+<h3 cbc>Example 1</h3><div>
+
+<p></p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+
+</pre></figure>
+
+<figure class="demo"><figcaption>A simple example (<a href="demo-1.htm" target="_blank">demo-1.htm</a>)</figcaption>
+<iframe class="content-height-observed" src="demo-1.htm"></iframe>
+</figure>
+
+<!--h3--Demo 1--></div>
+
+<!--h2--Examples--></div>
+
+<h2 cbc>References</h2><div>
+
+<dl>
+<dt><a href=""></a></dt><dd>
+	<p></p>
+	</dd>
+</dl>
+
+<!--h2--References--></div>
+
+</body></html>

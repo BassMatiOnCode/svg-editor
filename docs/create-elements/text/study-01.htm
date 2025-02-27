@@ -1,0 +1,71 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-14" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-14" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+
+<!--
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<script type="module" src="/inc/webcat/page-structure/demo-page.js" ></script>
+-->
+
+<style id="styleTheDocumet">
+#theDocument {
+	border : 1px solid silver ;
+	}
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Creating Elements" />
+<meta name="tags" content="project, SVG, editor, create, element, study, text" />
+<title>Creating Text (Projects > SVG Editor > Creating Elements)</title>
+<meta name="description" content="This study demonstrates how to create SVG text elements." />
+</head><body>
+
+<!--
+The problem: If the input element looses focus, a change event is fired first. No way to abort the text generation. 
+Another approach: The text input element is kept visible. A click event creates the SVG text element, positions it and copies the text value into the textContent property. Then the focus is set on the input element again.
+-->
+
+<div class="hide-if-hosted">
+<h1>Study: Creating Text Elements</h1><p class="subtitle">Using an HTML INPUT element to create an SVG text object</p>
+<p>Enter some text, then click in the document to position it.</p>
+</div>
+
+<svg id="theDocument" viewBox="-150,-150,300,300" width="300" height="300" style="touch-action:none">
+</svg>
+<input type="text" placeholder="Type here" style="border:1px solid silver ; display : block" />
+
+<script id="scriptCreateText" type="module">
+let point = theDocument.createSVGPoint( );
+const input = document.querySelector( "input" );
+function createTextElement ( evt ) {
+	console.debug( "createTextElement" );
+	if ( input.value.length > 0 ) {
+		const pt = theDocument.createSVGPoint( );
+		point.x = evt.clientX ;
+		point.y = evt.clientY ;
+		const text = document.createElementNS( theDocument.namespaceURI, "text" );
+		text.textContent = input.value ;
+		const p  = point.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+		p.x = Math.round( p.x );
+		p.y = Math.round( p.y );
+		if ( p.x !== 0 ) text.setAttribute( "x", p.x );
+		if ( p.y !== 0 ) text.setAttribute( "y", p.y );
+		theDocument.append( text );
+		input.value = "" ;
+		input.focus( );
+		}
+	}
+theDocument.addEventListener( "click" , createTextElement );
+theDocument.addEventListener( "contextmenu", ( ) => {
+	theDocument.removeEventListener( "click" , createTextElement );
+	} ) ;
+</script>
+</body></html>

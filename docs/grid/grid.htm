@@ -1,0 +1,186 @@
+﻿<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-12-09" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-18" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-18" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/tutorial-page.css" />
+<script type="module" src="/inc/webcat/page-structure/tutorial-page.js" ></script>
+ 
+<meta name="categories" content="Projects > SVG Editor > Grid" />
+<meta name="tags" content="project, SVG, editor, documentation, grid" />
+<meta name="description" content="SVG-Editor supports non-cartesian grids. The x and y axes can be tilted individually, and offset from the document's origin." />
+
+<title>The Grid (Projects > SVG Editor > Grid)</title>
+
+</head><body>
+
+<h1>The Grid</h1><p class="subtitle"></p>
+
+<h2 cbc>Introduction</h2><div>
+
+<p>The grid is defined by three primary properties for each axis:</p>
+
+<ul>
+<li>offset</li>
+<li>grid line distance</li>
+<li>grid line angle</li>
+</ul>
+
+<p>Then we have secondary properties:</p>
+
+<ul>
+<li>stroke color</li>
+<li>accent color</li>
+<li>accent every n-th line</li>
+<li>grid style: lines, crosses or dots</li>
+</ul>
+
+<p>The slanted grid lines are created by a transformation matrix on their container element, which skews horizontal and vertical lines.</p>
+
+<p>The grid lines are defined in a a group element:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;g id="theGrid" fill="none" stroke="silver" stroke-width="1" 
+<hi>transform</hi>="matrix(1 -0.2679 -0.2679 1 0 0)"&gt;
+	&lt;path class="grid y" d="M -100 -135 v 270 m 25 0 ... v -270"&gt;&lt;/path&gt;
+	&lt;path display="block" class="grid x" d="M -135 -100 h 270 m 0 25 h -270"&gt;&lt;/path&gt;
+	&lt;/g&gt;
+<path id="secondaryPointer" d="M -5 0 h 10 m -5 -5 v 10" stroke="black" stroke-width="1"></path>
+</pre></figure>
+
+<p>The grid is defined as a set of vertical and horizontal lines. It has a matrix transformation attribute, with a the matrix components b and c set to tan(&minus;30&deg;)=&minus;0.2679. This causes the skewing effect of the grid lines.</p>
+
+<p>A small crosshair named "secondaryPointer" provides visual feedback to the user.</p>
+
+<p>We could have done without the matrix transformation, but this approach makes the snapping algorithm very simple, even for skewed grid lines:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+<cc>// Convert CSS to SVG user coordinates</cc>
+let point = theDocument.createSVGPoint( );
+point.x = evt.clientX;
+point.y = evt.clientY;
+const matrixScreen = skewedCS.getScreenCTM( ).inverse( );
+point = point.matrixTransform( matrixScreen );
+<cc>// Snap to grid</cc>
+point.x = Math.round( point.x / dx ) * dx ;
+point.y = Math.round( point.y / dy ) * dy ;
+<cc>// Convert SVG coordinates to grid coordinate system</cc>
+const matrixGrid = theGrid.getCTM( );
+matrixGrid.e = matrixGrid.f = 0 ; 
+point = point.matrixTransform( matrixGrid );
+<cc>// Move the secondary pointer</cc>
+secondaryPointer.setAttribute( "transform" , `translate( ${ point.x },${ point.y } )` );
+</pre></figure>
+
+<p>This is essentially a four-step process:</p>
+
+<ol>
+<li>Convert screen coordinates to SVG user coordinates</li>
+<li>Perfom the snapping, essentially a rounded division by grid line distance and multiplication</li>
+<li>Transform the coordinates with the matrix of the skewed grid coordinate system.</li>
+<li>Move the secondary pointer to that coordinates point</li>
+</ol>
+
+<p>The secondary pointer still lives in the SVG user coordinate system but has moved to where the nearest grid line intersection appears on the screen. Therefore we can use its coordinates for construction of drawing objects. Their position will <em>not</em> change if the grid is altered in any way.</p>
+
+<!--h2--Introduction--></div>
+
+<h2 cbc>Studies</h2><div>
+
+<p>This section describes the studies made to develop the grid module.</p>
+
+<h3 cbc>Study 1: Creating Cross Hair Lines</h3><div>
+
+<p>A click on the SVG document creates a cross hair line. To draw the lines, the CSS coordinates of the pointer are converted to SVG user space first:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+theDocument.addEventListener( "click" , drawCrossHair );
+function drawCrossHair ( evt ) {
+	<cc>// Convert CSS to SVG coordinates</cc>
+	let point = theDocument.createSVGPoint( );
+	point.x = evt.clientX;
+	point.y = evt.clientY;
+	point = point.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	<cc>// Update GUI</cc>
+	cx.value = Math.round( point.x );
+	cy.value = Math.round( point.y );
+</pre></figure>
+
+<p>Then the viewbox properties are retrieved to find the line length:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	<cc>// Get viewbox properties</cc>
+	const { x: documentLeft, y : documentTop, 
+		width : documentWidth, height : documentHeight } =
+		theDocument.viewBox.baseVal ;
+</pre></figure>
+
+<p>Now we can move the x axis. If not present, the line is created first:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	<cc>// Create or move the x axis</cc>
+	let line = grid.querySelector( "line.origin.x" ) || (( ) => { 
+		const line = document.createElementNS( theDocument.namespaceURI, "line" );
+		line.classList.add( "origin", "x" );
+		line.setAttribute( "x1" , documentLeft );
+		line.setAttribute( "x2" , documentLeft + documentWidth );
+		grid.append( line ) ;
+		return line ;
+		} ) ( );
+	line.setAttribute( "y1" , cy.value );
+	line.setAttribute( "y2" , cy.value );
+	<cc>// Create or move the y axis</cc>
+	...
+	}
+</pre></figure>
+
+<p>The same is done for the y axis. Here the working demo:</p>
+
+<figure class="demo"><figcaption>Creating cross hairs (<a href="study-01.htm" target="_blank">Study 1</a></figcaption>
+<iframe class="content-height-observed" src="study-01.htm"></iframe>
+</figure>
+
+
+
+<!--h3--Study 1: Creating Cross Hair Lines--></div>
+
+<!--h2--Studies--></div>
+
+<h2 cbc>User Interface Design</h2><div>
+
+<p>The first version of the (opened) user interface looks like this:</p>
+
+<figure class="figure"><figcaption>Basic Controls</figcaption>
+<img src="fig-001.png" width="327"/></figure>
+
+<p>The dialog opens up when you click on the "Grid" button. You have several methods to create the grid:</p>
+
+<ol>
+<li>Edit the input fields, then click "Create".</li>
+<li>Set the focus on one of the x controls, then drag a line. Repeat for the y values.</li>
+<li>A combination of both methods.</li>
+</ol>
+
+<p>When done, click the "Grid" button again to close the dialog.</p>
+
+<p>Dragging a line defines the two main parameters for an axis, offset and angle. The actual target axis, x or y, is defined by the input focus. The line is then elongated to create the coordinate system axis (which goes through the origin (ox, oy)).</p>
+
+<!--h2--User Interface Design--></div>
+
+<h2 cbc>References</h2><div>
+
+<dl>
+<dt><a href=""></a></dt>
+	<dd></dd>
+</dl>
+
+<!--h2--References--></div>
+
+</body></html>

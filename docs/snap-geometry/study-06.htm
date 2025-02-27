@@ -1,0 +1,97 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-24" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-24" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<!--
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<cript type="module" src="/inc/webcat/page-structure/demo-page.js" ></cript>
+-->
+
+<style id="stylesForContainerDocument">
+div#messageBox { border : 1px solid silver }
+</style>
+
+<style id="stylesForSVGDocument">
+#theDocument { border : 1px solid silver }
+#theDocument .snap-overlay { display : none }
+#theDocument.snap-vertex .snap-overlay.vertex { display : initial }
+#theDocument.snap-center .snap-overlay.center { display : initial }
+#theDocument.snap-midpoint .snap-overlay.mid { display : initial }
+#theDocument.snap-stroke .snap-overlay.stroke { display : initial }
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Snap to Geometry" />
+<meta name="tags" content="project, SVG, editor, create, element, study, element, geometry, snap" />
+<title>Study 5: Snap to Geometry (Projects > SVG Editor > Snap and Glue)</title>
+<meta name="description" content="This study investigates pointerenter and pointerleave events." />
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>Study 6: Snap to Geometry</h1><p class="subtitle">Introducing the secondary pointer</p>
+</div>
+
+<svg id="theDocument" class="snap-vertex snap-midpoint snap-center xsnap-stroke" viewBox="-170,-150,300,300" width="300" height="300" style="touch-action:none">
+
+<rect id="r-001" x="-150" y="-40" width="80" height="60" stroke="black" stroke-width="1" fill="white" ></rect>
+	<rect class="snap-overlay stroke" data-for="r-001" x="-150" y="-40" width="80" height="60" stroke="transparent" stroke-width="12" fill="none" ></rect>
+<circle class="snap-overlay center point" data-for="r-001" cx="-110" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" data-for="r-001" cx="-150" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" data-for="r-001" cx="-70" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" data-for="r-001" cx="-70" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" data-for="r-001" cx="-150" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" data-for="r-001" cx="-110" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" data-for="r-001" cx="-70" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" data-for="r-001" cx="-110" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" data-for="r-001" cx="-150" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+
+<circle r="25" id="c-001" stroke="black" stroke-width="1" fill="none" transform="translate(25,15)" ></circle>
+<circle class="snap-overlay stroke" data-for="c-001" r="25" stroke="transparent" stroke-width="12" fill="none" transform="translate(25,15)" ></circle>
+<circle class="snap-overlay center point" data-for="c-001" cx="25" cy="15" r="20" stroke="none" fill="#dbd" ></circle>
+
+<path id="auxiliaryPointer" d="M 0 -1 v -4 M 1 0 h 4 M 0 1 v 4 M -1 0 h -4" stroke="black" stroke-width="1" fill="none" pointer-events="none"></path>
+</svg>
+
+<div id="messageBox"></div>
+
+<script id="theScript" type="module">
+function moveAuxiliaryPointer ( evt ) {	
+	let point = theDocument.createSVGPoint( );
+	point.x = evt.clientX ;
+	point.y = evt.clientY ;
+	point = point.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	auxiliaryPointer.setAttribute( "transform", `translate( ${ Math.round( point.x ) },${ Math.round( point.y ) } )` );
+	} 
+theDocument.addEventListener( "pointermove" , moveAuxiliaryPointer );
+for ( const o of theDocument.querySelectorAll( ".snap-overlay.point" )) {
+	o.addEventListener( "pointerenter" , evt => {
+		// Pin aux pointer to center of the snap point
+		console.debug( "Pointer enter", `${evt.target.className.baseVal} for ${evt.target.getAttribute("data-for")}` );
+		theDocument.removeEventListener( "pointermove" , moveAuxiliaryPointer );
+		auxiliaryPointer.setAttribute( "transform", `translate( ${ evt.target.cx.baseVal.value },${ evt.target.cy.baseVal.value } )` );
+		} ) ;
+	o.addEventListener( "pointerleave" , evt => {
+		// Make aux pointer follow the primary pointer again
+		console.debug( "Pointer leave", `${evt.target.className.baseVal} for ${evt.target.getAttribute("data-for")}` );
+		theDocument.addEventListener( "pointermove" , moveAuxiliaryPointer );
+		moveAuxiliaryPointer( evt );
+		} ) ;
+	}
+theDocument.addEventListener( "pointerdown", evt => {
+	// Log position of the auxiliary pointer to the message box 
+	const matrix = auxiliaryPointer.transform.baseVal.consolidate().matrix ;
+	console.debug( "Aux position used:", `${ matrix.e } ${ matrix.f } for ${evt.target.getAttribute("data-for")}` );
+	const text = document.createTextNode( `Aux position used: ${ matrix.e } ${ matrix.f } for ${evt.target.getAttribute("data-for")}` );
+	messageBox.prepend( document.createElement( "BR" ));
+	messageBox.prepend( text );
+	} ) ;
+</script>
+</body></html>

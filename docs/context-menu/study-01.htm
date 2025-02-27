@@ -1,0 +1,124 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-01-11" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-01-28" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<script type="module" src="/inc/webcat/page-structure/demo-page.js" ></script>
+
+<meta name="categories" content="Programming > Web Technologies" />
+<meta name="tags" content="demo" />
+<title>Context Menu Study (Projects > SVG Editor > Context Menu)</title>
+<meta name="description" content="Explores a window with toolbars. Problem here: The canvas box needs to fill the space between toolbars, and the toolbar size can change dynamically. We might need flexbox or grid layout." />
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>Context Menu Study</h1>
+<p class="subtitle">Ring 0 Layout</p>
+</div>
+
+<style>input { width : 4em }</style>
+
+<table><tbody><tr>
+	<td><label for="numButtons">Number of buttons:</label></td>
+	<td><input id="numButtons" type="number" value="4" min="1" /></td>
+</tr><tr>
+	<td><label for="buttonRadius">Button radius:</label></td>
+	<td><input id="buttonRadius" type="number" value="45" min="5" /></td>
+</tr><tr>
+	<td><label for="spacingFactor">Spacing factor:</label></td>
+	<td><input id="spacingFactor" type="number" value="1.4" min="1.0" step="0.1" /></td>
+</tr><tr>
+	<td><label for="verticalTextOffset">Vertical text offset:</label></td>
+	<td><input id="verticalTextOffset" type="number" value="-2" min="-10" max="10" step="1" /></td>
+</tr><tr>
+	<td><label for="angularOffset">Vertical text offset:</label></td>
+	<td><input id="angularOffset" type="number" value="-90" min="-360" max="360" step="1" /></td>
+</tr></tbody></table>
+
+
+<style id="styleContextMenu">
+#wrapper { 
+	border : 1px none silver ;
+	width : 32px ;
+	height : 32px ;
+	overflow : visible ;
+	}
+#theContextMenu {
+	overflow : visible ;
+	}
+#theContextMenu circle {
+	stroke : darkorange ;
+	stroke-width : 4px ;
+	fill : white ;
+	}
+#theContextMenu circle:hover {
+	fill : #ffe9cf ;
+	}
+#theContextMenu text {
+	font-family : "Segoe UI", Tahoma, Geneva, Verdana, sans-serif ;
+	font-size : 60px ;
+	dominant-baseline : central ;
+	text-anchor : middle ;
+	stroke : none ;
+	fill : darkorange ;
+	pointer-events : none ;
+	}
+</style>
+
+<svg id="theContextMenu" viewBox="-50,-50,100,100" width="32" height="32" style="margin-top:50px ; margin-left:100px">
+	</svg>
+
+<script id="scriptContextMenu" type="module">
+
+var svgNameSpace = "http://www.w3.org/2000/svg" ;
+let n , D , δ = [ ] , r = [ ];
+
+function parameterChange ( evt ) {
+	theContextMenu.textContent = "" ;
+	n = + numButtons.value ;
+	// Minimum distance between buttons
+	D = 2 * buttonRadius.value * spacingFactor.value ;
+	// Angle between buttons and layout ring radius
+	if ( n === 1 ) { δ[ 0 ] = 0 ; r[ 0 ] = 0 ; } 
+	else if ( n === 2 ) { δ[ 0 ] = Math.PI ; r[ 0 ] = D/2 ; } 
+	else { δ[ 0 ] = 2 * Math.PI / n ; r[ 0 ] = D / 2 / Math.sin( δ[ 0 ] / 2 ) ; }
+	// Create the buttons
+	for ( let i = 0, φ = angularOffset.value / 180 * Math.PI ; i < n ; i += 1 , φ += δ[ 0 ] ) {
+		// Calculate coordinates
+		const x = r[ 0 ] * Math.cos( φ ) ;
+		const y =  r[ 0 ] * Math.sin( φ ) ;
+		// Group
+		const g = document.createElementNS( svgNameSpace, "g" );
+		g.setAttribute( "transform" , `translate(${x}, ${y})` ) ;
+		// Circle
+		const c = document.createElementNS( svgNameSpace, "circle" );
+		c.setAttribute( "r" , buttonRadius.value );
+		// Text
+		const t = document.createElementNS( svgNameSpace, "text" );
+		t.textContent = String.fromCharCode( 65 + i );
+		t.setAttribute( "y", verticalTextOffset.value ) ;
+		// Compose
+		theContextMenu.append( g );
+		g.append( c );
+		g.append( t );
+		}
+	}
+numButtons.addEventListener( "change" , parameterChange ) ;
+buttonRadius.addEventListener( "change" , parameterChange ) ;
+spacingFactor.addEventListener( "change" , parameterChange ) ;
+verticalTextOffset.addEventListener( "change" , parameterChange ) ;
+angularOffset.addEventListener( "change" , parameterChange ) ;
+parameterChange( );
+</script>
+
+</body></html>

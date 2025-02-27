@@ -1,0 +1,133 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-15" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-15" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<!--
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<cript type="module" src="/inc/webcat/page-structure/demo-page.js" ></cript>
+-->
+
+<style id="styleTheDocumet">
+#theDocument { border : 1px solid silver }
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Creating Elements" />
+<meta name="tags" content="project, SVG, editor, create, element, study, construction, ellipse" />
+<title>Creating Ellipses (Projects > SVG Editor > Creating Elements)</title>
+<meta name="description" content="This study demonstrates how to create SVG ellipse elements." />
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>Study: Creating Ellipses</h1>
+<p>First drag to define the size rectangle, then drag again to define the rotation angle.</p>
+</div>
+
+<svg id="theDocument" viewBox="-150,-150,300,300" width="300" height="300" style="touch-action:none">
+</svg>
+
+<script id="scriptCreateEllipses" type="module">
+/*	
+ *	An ellipse fits in a rectangle, which is defined by its oposite points, and a rotation angle.
+ *	It is not clear what constraints are demanded by the user, so it might be necessary to 
+ *	provide more than one methods to define a ellipse.
+ *	cx, cy = center point
+ *	rx, ry = radii on x and y axes
+ *	1st click defines cx and cy
+ *	2nd click defines rx = x2 - x1 and ry = y2 - y1
+ *	The ellipse can be rotated around the center point by dragging one of the vertex points.
+ *	The ellipse can be stretched along the minor or major axes by dragging one of the vertex points.
+ *	Compared with the path command elliptical arc, the arc is scaled after construction to reach the end point.
+ */
+
+let ellipse = undefined , p1 = { } , p2 = { } , centerpoint = { } , p1angle, p2angle ;
+let fillColor = "white" ;
+let strokeColor = "blue" ;
+let strokeWidth = "1" ;
+function createEllipse( evt ) {
+	ellipse = document.createElementNS( theDocument.namespaceURI, "ellipse" );
+	ellipse.setAttribute( "fill", "none");
+	ellipse.setAttribute( "stroke", "black");
+	ellipse.setAttribute( "stroke-width" , "1" );
+	theDocument.append( ellipse );
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	p1 = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	resizeEllipse( evt );
+	theDocument.removeEventListener( "pointerdown" , createEllipse );
+	theDocument.addEventListener( "pointermove" , resizeEllipse );
+	theDocument.addEventListener( "pointerup" , finishSize );
+	}
+function resizeEllipse( evt ) {
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	p2 = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	p2.x = Math.round( p2.x );
+	p2.y = Math.round( p2.y );
+	ellipse.setAttribute( "cx", ( p1.x + p2.x ) / 2 );
+	ellipse.setAttribute( "cy", ( p1.y + p2.y ) / 2 );
+	ellipse.setAttribute( "rx", Math.abs(( p2.x - p1.x ) / 2 ));
+	ellipse.setAttribute( "ry", Math.abs(( p2.y - p1.y ) / 2 ));
+	}
+function finishSize ( evt ) {
+	// Calculate center point
+	centerpoint.x = ( p1.x + p2.x ) / 2 ;
+	centerpoint.y = ( p1.y + p2.y ) / 2 ;
+	// Setup next state
+	theDocument.removeEventListener( "pointerup" , finishSize );
+	theDocument.removeEventListener( "pointermove" , resizeEllipse );
+	theDocument.addEventListener( "pointerdown" , startRotation );
+	}
+function startRotation ( evt ) {
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	// P1 will be re-used
+	p1 = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	p1.x = Math.round( p1.x );
+	p1.y = Math.round( p1.y );
+	// Calculate angle to P1
+	const dx = p1.x - centerpoint.x ;
+	const dy = p1.y - centerpoint.y ;
+	p1angle = Math.abs( dy ) < 0.001 ? 0 : Math.round( Math.atan( dy / dx ) * 180 / Math.PI );
+	// Setup next state
+	theDocument.removeEventListener( "pointerdown" , startRotation );
+	theDocument.addEventListener( "pointermove" , updateRotationAngle );
+	theDocument.addEventListener( "pointerup" , finishEllipse );
+	}
+function updateRotationAngle ( evt ) { 
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	// Point 2 will be re-used
+	p2 = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	const dx = p2.x - centerpoint.x ;
+	const dy = p2.y - centerpoint.y ;
+	// Calculate P2 angle
+	const p2angle = Math.abs( dy ) < 0.001 ? 0 : Math.round( Math.atan( dy / dx ) * 180 / Math.PI );
+	console.debug( "Angles:" , p1angle, p2angle, p2.x, p2.y);
+	// Update transform=rotate attribute 
+	ellipse.setAttribute( "transform" , `rotate( ${ p2angle - p1angle }, ${ centerpoint.x }, ${ centerpoint.y } )` ) ;
+	} 
+function finishEllipse( evt ) {
+	updateRotationAngle( evt );
+	ellipse.setAttribute( "fill", fillColor );
+	ellipse.setAttribute( "stroke", strokeColor );
+	ellipse.setAttribute( "stroke-width", strokeWidth );
+	theDocument.removeEventListener( "pointerup" , finishEllipse );
+	theDocument.removeEventListener( "pointermove" , updateRotationAngle );
+	theDocument.addEventListener( "pointerdown" , createEllipse );
+	}
+theDocument.addEventListener( "pointerdown" , createEllipse );
+</script>
+</body></html>

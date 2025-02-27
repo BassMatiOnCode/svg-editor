@@ -1,0 +1,110 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-16" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-16" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<!--
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<cript type="module" src="/inc/webcat/page-structure/demo-page.js" ></cript>
+-->
+
+<style id="styleTheDocumet">
+#theDocument { border : 1px solid silver }
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Creating Elements" />
+<meta name="tags" content="project, SVG, editor, create, element, study, construction, rectangle" />
+<title>Creating Rectangles (Projects > SVG Editor > Creating Elements)</title>
+<meta name="description" content="This study demonstrates how to create SVG rectangle elements." />
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>Study: Creating Rectangles</h1>
+<p>Click 1, click 2 = set corners, click 3 = set rotation angle</p>
+</div>
+
+<svg id="theDocument" viewBox="-150,-150,300,300" width="300" height="300">
+</svg>
+
+<script id="scriptCreateEllipses" type="module">
+/*	
+ */
+
+let rectangle = undefined , p1 = { } , p2 = { } , centerpoint = { } , p2angle ;
+let fillColor = "white" ;
+let strokeColor = "blue" ;
+let strokeWidth = "1" ;
+function createRectangle( evt ) {
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	p1 = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	p1.x = Math.round( p1.x );
+	p1.y = Math.round( p1.y );
+	rectangle = document.createElementNS( theDocument.namespaceURI, "rect" );
+	rectangle.setAttribute( "fill", "none");
+	rectangle.setAttribute( "stroke", "black");
+	rectangle.setAttribute( "stroke-width" , "1" );
+	rectangle.setAttribute( "x", p1.x );
+	rectangle.setAttribute( "y", p1.y );
+	resizeRectangle( evt );
+	theDocument.append( rectangle );
+	theDocument.removeEventListener( "click" , createRectangle );
+	theDocument.addEventListener( "mousemove" , resizeRectangle );
+	theDocument.addEventListener( "click" , startRotation );
+	}
+function resizeRectangle( evt ) {
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	p2 = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	p2.x = Math.round( p2.x );
+	p2.y = Math.round( p2.y );
+	rectangle.setAttribute( "width", p2.x - p1.x );
+	rectangle.setAttribute( "height", p2.y - p1.y );
+	}
+function startRotation ( evt ) {
+	// Calculate center point
+	centerpoint.x = ( p1.x + p2.x ) / 2 ;
+	centerpoint.y = ( p1.y + p2.y ) / 2 ;
+	// Calculate p2 angle
+	const dx = p2.x - centerpoint.x ;
+	const dy = p2.y - centerpoint.y ;
+	if ( Math.abs( dy ) < 0.001 ) p2angle = 0 ;
+	else p2angle = Math.round( Math.atan( dy / dx ) * 180 / Math.PI );
+	theDocument.removeEventListener( "click" , startRotation );
+	theDocument.removeEventListener( "mousemove" , resizeRectangle );
+	theDocument.addEventListener( "mousemove" , rotateRectangle );
+	theDocument.addEventListener( "click" , finishRectangle );
+	}
+function rotateRectangle ( evt ) { 
+	const pt = theDocument.createSVGPoint( );
+	pt.x = evt.clientX ;
+	pt.y = evt.clientY ;
+	const p3 = pt.matrixTransform( theDocument.getScreenCTM( ).inverse( ));
+	const dx = p3.x - centerpoint.x ;
+	const dy = p3.y - centerpoint.y ;
+	const p3angle = Math.abs( dy ) < 0.001 ? 0 : Math.round( Math.atan( dy / dx ) * 180 / Math.PI );
+	console.debug( "Angles:" , p2angle, p3angle, p3.x, p3.y);
+	rectangle.setAttribute( "transform" , `rotate( ${ p3angle - p2angle }, ${ centerpoint.x }, ${ centerpoint.y } )` ) ;
+	} 
+function finishRectangle( evt ) {
+	rotateRectangle( evt );
+	rectangle.setAttribute( "fill", fillColor );
+	rectangle.setAttribute( "stroke", strokeColor );
+	rectangle.setAttribute( "stroke-width", strokeWidth );
+	theDocument.removeEventListener( "click" , finishRectangle );
+	theDocument.removeEventListener( "mousemove" , rotateRectangle );
+	theDocument.addEventListener( "click" , createRectangle );
+	}
+theDocument.addEventListener( "click" , createRectangle );
+</script>
+</body></html>
