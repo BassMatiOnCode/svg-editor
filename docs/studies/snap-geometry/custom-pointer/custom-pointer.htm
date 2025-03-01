@@ -1,0 +1,119 @@
+﻿<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-12-09" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-28" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-03-01" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/tutorial-page.css" />
+<script type="module" src="/inc/webcat/page-structure/tutorial-page.js" ></script>
+ 
+<meta name="categories" content="Projects > SVG Editor > Custom Pointer" />
+<meta name="tags" content="project, SVG, editor, documentation, custom, Pointer" />
+<meta name="description" content="CSS allows to specify a custom pointer and specify the hotspot coordinates. This could be exploited for snapping." />
+
+<title>Using a custom pointer for snapping (Projects > SVG Editor > Custom Pointer)</title>
+
+</head><body>
+
+<h1>Custom CSS Pointer for Snapping</h1><p class="subtitle">Tweaking the hotspot offset</p>
+
+<h2 cbc>Introduction</h2><div>
+
+<p>CSS allows to set a custom pointer on elements:</p>
+
+<pre>cursor : url(custom-pointer.svg) 25 25, auto;</pre>
+
+<p>The standard hotspot location is in the upper left corner of the image. That must be moved to the hotspot of the pointer image. To provide an offset, simply move that point away from the image hotspot, but note that the hotspot must remain <em>inside the image boundaries</em>.</p>
+
+<!--h2--Introduction--></div>
+
+<h2 cbc>Studies</h2><div>
+
+<h3 cbc>Study 1: Custom Pointer for Snap-to-Circle</h3><div>
+
+<p>We start with the SVG code for the pointer:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;svg xmlns="http://www.w3.org/2000/svg" 
+	viewBox="-25 -25 50 50" width="50" height="50" 
+	fill="none" &gt;
+&lt;path d="M 0 -1 v -4 M 1 0 h 4 M 0 1 v 4 M -1 0 h -4" 
+	stroke="black" stroke-width="1" stroke-linecap="butt" fill="none" /&gt;
+&lt;/svg&gt;
+</pre></figure>
+
+<p>The cursor image has a size of 50 by 50 pixels, which allows a maximum snap distance of 25 pixels. That should be enough for most situations.</p>
+
+<p>This image is assigned to the SVG root document element:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;svg id="theDocument" ... style="<hi>cursor: url('custom-pointer.svg') 25 25, auto</hi>" &gt;
+</pre></figure>
+
+<p>To snap the pointer to the circle, two event listeners must be registered:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+for ( const o of theDocument.querySelectorAll( "<hi>.snap-overlay.circle</hi>" )) {
+	o.addEventListener( "<hi>pointerenter</hi>" , evt => {
+		theDocument.addEventListener( "pointermove" , trackCircleLine );
+		} ) ;
+	o.addEventListener( "<hi>pointerleave</hi>" , evt => {
+		theDocument.removeEventListener( "pointermove" , trackCircleLine );
+		<cc>// Reset the hot spot of the pointer</cc>
+		theDocument.style.cursor = "url('custom-pointer.svg') <hi>25 25</hi>, auto" ;
+		} ) ;
+	}
+</pre></figure>
+
+<p>The <tt>pointermove</tt> event handler implements the snapping logic:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+function trackCircleLine ( evt ) {
+	<cc>// Compute the pointer coordinates</cc>
+	let pointer = theDocument.createSVGPoint( );
+	pointer.x = evt.clientX ;
+	pointer.y = evt.clientY ;
+	pointer = pointer.matrixTransform( theDocument.getScreenCTM( ).inverse());
+	<cc>// Retrieve the circle center location</cc>
+	const cx = evt.target.cx.baseVal.value ;
+	const cy = evt.target.cy.baseVal.value ;
+	<cc>// Distance to pointer location</cc>
+	let dx =  pointer.x - cx ;
+	let dy =  pointer.y - cy ;
+	<cc>// Scaling factor</cc>
+	const f = evt.target.r.baseVal.value / Math.sqrt( dx ** 2 + dy ** 2 );
+	<cc>// Adjust the pointer's hotspot offset</cc>
+	theDocument.style.<hi>cursor</hi> = `url('custom-pointer.svg') ${ 25 + <hi>dx - dx * f</hi> } ${ 25 + <hi>dy - dy * f</hi> }, auto`;
+	}	
+</pre></figure>
+
+<p>The math behind the snapping algorithm is explained in more detail in <a href="../snap-circle/snap-circle.htm">Snap to Circle</a>.</p>
+
+<!--h3--Study 1: Custom Pointer for Snap-to-Circle--></div>
+
+<!--h2--Studies--></div>
+
+<h2 cbc>Conclusion</h2><div>
+
+<p>Technically, the algorithm works, and is efficient. But the hotspot offset can only be specified with pixel precision, whereas an auxiliary pointer, defined in the SVG document, allows for sub-pixel positioning. The difference is a very smooth movement of the auxiliary pointer, wereas the custom pointer movements are somewhat "jumpy".</p>
+
+<p>Therefore, the use of a custom pointer for snapping will be dropped.</p>
+
+<!--h2--Conclusion--></div>
+
+<h2 cbc>References</h2><div>
+
+<dl>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor">CSS &gt; cursor</a></dt>
+	<dd>on MDN.</dd>
+</dl>
+
+<!--h2--References--></div>
+
+</body></html>

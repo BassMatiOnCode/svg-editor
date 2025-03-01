@@ -6,7 +6,7 @@
 <meta name="author" content="USP" />
 <meta name="creation-date" content="2025-02-23" />
 <meta name="editor" content="USP" />
-<meta name="change-date" content="2025-02-23" />
+<meta name="change-date" content="2025-02-28" />
 <meta name="version" content="1" />
 <meta name="sectionTitle" content="../title.svg" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
@@ -28,6 +28,10 @@
 <p>A rectangle has 9 snap points: four corners, the four middle-points of the sides, and the center point, the center of weight. Additionally, the four perimeter lines can attract the pointer.</p>
 
 <p>Points are set in mousedown event handlers. If a snap function is active (snap to grid, lines, points), a secondary pointer is shown and positioned according to the "magnetic" influence of nearby points and lines.</p>
+
+<p>While "snap to geometry" is active, an auxiliary pointer is active, and the primary pointer is hidden. Nonetheless, the primary pointer is still active, and the auxiliary pointer follows the primary pointer. Whenever a point is set, the coordinates of the auxiliary pointer are used.</p>
+
+<p>Currently, the auxiliary pointer is a regular SVG object, but a transition to a custom CSS cursor is planned.</p>
 
 <h3 cbc>Finding Nearby Objects</h3><div>
 
@@ -755,8 +759,8 @@ function trackSnapPath ( evt ) {
 	}
 </pre></figure>
 
-<figure class="demo"><figcaption>Snap to path, nearest candidates version (<a href="demo-10-a.htm" target="_blank">Demo 10a</a>)</figcaption>
-<iframe class="content-height-observed" src="demo-10-a.htm"></iframe>
+<figure class="demo"><figcaption>Snap to path, nearest candidates version (<a href="study-10-a.htm" target="_blank">Study 10a</a>)</figcaption>
+<iframe class="content-height-observed" src="study-10-a.htm"></iframe>
 </figure>
 
 <!--h3--Study 10: Optimized Path Search 2--></div>
@@ -764,6 +768,10 @@ function trackSnapPath ( evt ) {
 <h3 cbc>Study 11: Snap to Circle</h3><div>
 
 <p>This demo shows how to snap to a circular snap path.</p>
+
+<figure class="demo"><figcaption>Snap to circle (<a href="study-11.htm" target="_blank">Study 11</a>)</figcaption>
+<iframe class="content-height-observed" src="study-11.htm"></iframe>
+</figure>
 
 <!--h3--Study 11: Snap to Circle--></div>
 
@@ -806,7 +814,10 @@ function trackSnapPath ( evt ) {
 <dt><a href="https://www.smashingmagazine.com/2018/05/svg-interaction-pointer-events-property/">Managing SVG Interaction With The Pointer Events Property</a> by Tiffany Brown, Smashing Magazine</dt>
 <dt><a href="https://stackoverflow.com/questions/63439727/efficient-way-to-find-point-on-a-svg-stroke-closest-to-the-current-mouse-point">Efficient way to find point on a svg stroke closest to the current mouse point?</a></dt>
 	<dd>By Alex on Stackoverflow.</dd>
-
+<dt><a href="https://bengammon.co.uk/custom-css-cursors-and-offset/">Custom CSS cursors and offset</a></dt>
+	<dd>by Ben Gammon</dd>
+	<dd>Gives a short introduction. Custom cursors can be designed in SVG. A hotspot offset can be specified. This feature shall be used place the pointer over the snapped element.</dd>
+	<dd>Possible Problems: "Overflow" must be possible.</dd>
 </dl>
 
 <!--h2--References--></div>

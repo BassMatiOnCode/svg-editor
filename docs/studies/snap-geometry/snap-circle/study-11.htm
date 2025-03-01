@@ -26,36 +26,42 @@ div#messageBox { border : 1px solid silver }
 #theDocument.snap-center .snap-overlay.center { display : initial }
 #theDocument.snap-midpoint .snap-overlay.mid { display : initial }
 #theDocument.snap-stroke .snap-overlay.stroke { display : initial }
+#theDocument.snap-stroke .snap-overlay.circle { display: initial }
 </style>
 
 <meta name="categories" content="Projext > SVG Editor > Snap to Geometry" />
 <meta name="tags" content="project, SVG, editor, create, element, study, element, geometry, snap" />
-<title>Study 10: Snap to Stroke Improvements 2 (Projects > SVG Editor > Snap and Glue)</title>
-<meta name="description" content="This study explores coarse samples proximity problems, and their solution." />
+<title>Study 11: Snap to Circle (Projects > SVG Editor > Snap and Glue)</title>
+<meta name="description" content="This study implements a snap-to-circle algorithm." />
 
 </head><body>
 
 <div class="hide-if-hosted">
-<h1>10: Snap to Stroke Improvements 2</h1><p class="subtitle">Sample Proximity Problems</p>
+<h1>11: Snap to Circle</h1><p class="subtitle">Snapping to center, circumference and axis points</p>
 </div>
 
-<svg id="theDocument" class="snap-stroke" viewBox="-170,-150,300,300" width="300" height="300" style="touch-action:none">
+<svg id="theDocument" class="snap-stroke" viewBox="-170,-150,300,300" width="300" height="300" style="touch-action:none ; cursor:none">
 
 <rect id="r-001" x="-150" y="-40" width="80" height="60" stroke="black" stroke-width="1" fill="white" ></rect>
-<rect class="snap-overlay stroke" data-for="r-001" x="-150" y="-40" width="80" height="60" stroke="transparent" stroke-width="12" fill="none" ></rect>
-<circle class="snap-overlay center point" data-for="r-001" cx="-110" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
-<circle class="snap-overlay vertex point" data-for="r-001" cx="-150" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
-<circle class="snap-overlay vertex point" data-for="r-001" cx="-70" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
-<circle class="snap-overlay vertex point" data-for="r-001" cx="-70" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
-<circle class="snap-overlay vertex point" data-for="r-001" cx="-150" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
-<circle class="snap-overlay mid point" data-for="r-001" cx="-110" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
-<circle class="snap-overlay mid point" data-for="r-001" cx="-70" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
-<circle class="snap-overlay mid point" data-for="r-001" cx="-110" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
-<circle class="snap-overlay mid point" data-for="r-001" cx="-150" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+<rect class="snap-overlay stroke" x="-150" y="-40" width="80" height="60" stroke="transparent" stroke-width="12" fill="none" ></rect>
+<circle class="snap-overlay center point" cx="-110" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" cx="-150" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" cx="-70" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" cx="-70" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" cx="-150" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" cx="-110" cy="-40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" cx="-70" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" cx="-110" cy="20" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay mid point" cx="-150" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
 
-<circle r="25" id="c-001" stroke="silver" stroke-width="1" fill="none" transform="translate(25,15)" ></circle>
-<circle class="snap-overlay stroke" data-for="c-001" cx="25" cy="15" r="25" stroke="transparent" stroke-width="12" fill="none" ></circle>
-<circle class="snap-overlay center point" data-for="c-001" cx="25" cy="15" r="20" stroke="none" fill="#dbd" ></circle>
+<circle cx="25" cy="15" r="25" id="c-001" stroke="silver" stroke-width="1" fill="none" ></circle>
+<circle class="snap-overlay center point" cx="25" cy="15" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay circle" cx="25" cy="15" r="25" stroke="#dbd" stroke-width="12" fill="none" ></circle>
+<circle class="snap-overlay vertex point" cx="25" cy="-10" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" cx="50" cy="15" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" cx="25" cy="40" r="5" stroke="none" fill="#dbd" ></circle>
+<circle class="snap-overlay vertex point" cx="0" cy="15" r="5" stroke="none" fill="#dbd" ></circle>
+
 
 <path id="auxiliaryPointer" d="M 0 -1 v -4 M 1 0 h 4 M 0 1 v 4 M -1 0 h -4" stroke="black" stroke-width="1" fill="none" pointer-events="none"></path>
 </svg>
@@ -176,6 +182,33 @@ for ( const o of theDocument.querySelectorAll( ".snap-overlay.point" )) {
 		} ) ;
 	}
 // - - - Snap to circle
+for ( const o of theDocument.querySelectorAll( ".snap-overlay.circle")) {
+	o.addEventListener( "pointerenter" , evt => {
+		// Track the circle line
+		console.debug( "pointer enter" );
+		theDocument.removeEventListener( "pointermove" , trackPrimaryPointer );
+		theDocument.addEventListener( "pointermove" , trackCircleLine );
+		} ) ;
+	o.addEventListener( "pointerleave" , evt => {
+		// Track pointer again
+		console.debug( "pointer leave" );
+		theDocument.removeEventListener( "pointermove" , trackCircleLine );
+		theDocument.addEventListener( "pointermove" , trackPrimaryPointer );
+		trackPrimaryPointer( evt );
+		} ) ;
+	}
+function trackCircleLine ( evt ) {
+	let pointer = theDocument.createSVGPoint( );
+	pointer.x = evt.clientX ;
+	pointer.y = evt.clientY ;
+	pointer = pointer.matrixTransform( theDocument.getScreenCTM( ).inverse());
+	const cx = evt.target.cx.baseVal.value ;
+	const cy = evt.target.cy.baseVal.value ;
+	const dx =  pointer.x - cx ;
+	const dy =  pointer.y - cy ;
+	const f = evt.target.r.baseVal.value / Math.sqrt( dx ** 2 + dy ** 2 );
+	auxiliaryPointer.setAttribute( "transform" , `translate( ${ cx + f * dx } ${ cy + f * dy })` );
+	}	
 // - - - Other functionality
 theDocument.addEventListener( "pointerdown", evt => {
 	// Log position of the auxiliary pointer to the message box 
@@ -189,5 +222,18 @@ checkSnapCenter.addEventListener( "change" , ( ) => theDocument.classList.toggle
 checkSnapMidPoint.addEventListener( "change" , ( ) => theDocument.classList.toggle( "snap-midpoint" )) ;
 checkSnapVertex.addEventListener( "change" , ( ) => theDocument.classList.toggle( "snap-vertex" )) ;
 checkSnapStroke.addEventListener( "change" , ( ) => theDocument.classList.toggle( "snap-stroke" )) ;
+
+globalThis.asin = function( x, y ) { 
+	return (x < 0 ? -1 : 1) * Math.asin( y / Math.sqrt( x ** 2 + y ** 2 )) / Math.PI * 180  + ( x < 0 ? y < 0 ? -180 : 180 : 0 ) ;
+	}
+function asin ( x, y ) {
+	return Math.atan( y / x ) / Math.PI * 180 + ( x >= 0 ? 0 : y < 0 ? -180 : 180 ) ;
+	}
+function atan ( x1, y1, x2=0, y2=0 ) {
+	const dx = x2 - x1 ;
+	const dy = y2 - y1 ;
+	return Math.atan( dy / dx ) / Math.PI * 180 + ( dx >= 0 ? 0 : dy < 0 ? -180 : 180 ) ;
+	}
+
 </script>
 </body></html>

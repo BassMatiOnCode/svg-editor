@@ -1,0 +1,6 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" 
+	viewBox="-25 -25 50 50" width="50" height="50" fill="none" style="border:1px none silver ; overflow : visible">
+
+<path d="M 0 -1 v -4 M 1 0 h 4 M 0 1 v 4 M -1 0 h -4" stroke="black" stroke-width="1" stroke-linecap="butt" fill="none"></path>
+
+</svg>

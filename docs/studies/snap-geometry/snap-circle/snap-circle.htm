@@ -1,0 +1,146 @@
+﻿<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-12-09" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-28" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-28" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<link rel="stylesheet" href="/inc/webcat/page-structure/tutorial-page.css" />
+<script type="module" src="/inc/webcat/page-structure/tutorial-page.js" ></script>
+ 
+<meta name="categories" content="Projects > SVG Editor > Snap > Geometry" />
+<meta name="tags" content="project, SVG, editor, documentation, snap, geometry, circle" />
+<meta name="description" content="" />
+
+<title>Snap to Circle (Projects > SVG Editor > Snap > Geometry)</title>
+
+</head><body>
+
+<h1>Snap to Circle</h1><p class="subtitle">Based on a line between pointer and the center of the circle</p>
+
+<h2 cbc>Introduction</h2><div>
+
+<p>The concept is simple: The intersection between the circle and a line between the center of the circle and the pointer position defines the position of the auxiliary pointer.</p>
+
+<figure class="figure"><figcaption></figcaption>
+<img src="fig-001.png" width="373" />
+</figure>
+
+<!--h2--Introduction--></div>
+
+<h2 cbc>Studies</h2><div>
+
+<h3 cbc>Study 11: Snap to Circle</h3><div>
+
+<p>The snap overlay is an SVG circle element:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+&lt;circle class="<hi>snap-overlay circle</hi>" 
+	cx="25" cy="15" r="25" 
+	stroke="transparent" stroke-width="12" fill="none" &gt;
+	&lt;/circle&gt;
+</pre></figure>
+
+<p>Pointerenter and pointerleave events exchange <tt>trackPrimaryPointer</tt> with <tt>trackCircleLine</tt> functions:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+for ( const o of theDocument.querySelectorAll( "<hi>.snap-overlay.circle</hi>")) {
+	o.addEventListener( "pointerenter" , evt => {
+		theDocument.removeEventListener( "pointermove" , trackPrimaryPointer );
+		theDocument.addEventListener( "pointermove" , trackCircleLine );
+		} ) ;
+	o.addEventListener( "pointerleave" , evt => {
+		theDocument.removeEventListener( "pointermove" , trackCircleLine );
+		theDocument.addEventListener( "pointermove" , trackPrimaryPointer );
+		} ) ;
+	}
+</pre></figure>
+
+<p>As always, the coordinates of the pointer is calculated:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+function trackCircleLine ( evt ) {
+	let pointer = theDocument.createSVGPoint( );
+	pointer.x = evt.clientX ;
+	pointer.y = evt.clientY ;
+	pointer = pointer.matrixTransform( theDocument.getScreenCTM( ).inverse());
+</pre></figure>
+
+<p>The center coordinates of the circle and coordinates of the pointer, relative to the center:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	const cx = evt.target.cx.baseVal.value ;
+	const cy = evt.target.cy.baseVal.value ;
+	const dx =  pointer.x - cx ;
+	const dy =  pointer.y - cy ;
+</pre></figure>
+
+<p>The relative coordinates of the auxiliary pointer are a scaled down version of dx and dy:</p>
+
+<figure class="listing"><figcaption></figcaption><pre>
+	const f = evt.target.r.baseVal.value / Math.sqrt( dx ** 2 + dy ** 2 );
+	auxiliaryPointer.setAttribute( "transform" , `translate( ${ cx + f * dx } ${ cy + f * dy })` );
+	}	
+</pre></figure>
+
+<p>That's it.</p>
+
+<figure class="demo"><figcaption>Snap to circle (<a href="study-11.htm" target="_blank">Study 11</a>)</figcaption>
+<iframe class="content-height-observed" src="study-11.htm"></iframe>
+</figure>
+
+
+<!--h3--Study 11: Snap to Circle--></div>
+
+<p>T</p>
+
+<!--h2--Studies--></div>
+
+<h2 cbc>References</h2><div>
+
+<h3>Programming References</h3>
+
+<dl>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/Document/elementFromPoint">document.elementFromPoint()</a></dt>
+	<dd>returns the topmost element at that point.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGGeometryElement/isPointInFill">SVGGeometryElement.isPointInFill()</a></dt>
+	<dd>Determines whether a given point is within the fill shape of an element.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGGeometryElement/isPointInStroke">SVGGeometryElement.isPointInStroke()</a></dt>
+	<dd>Determines whether a given point is within the stroke shape of an element.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGGraphicsElement/getBBox">SVGGraphicsElement.getBBox()</a></dt>
+	<dd>Returns a DOMRect representing the computed bounding box of the current element.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/Element/pointerenter_event">element.pointerenter</a></dt>
+	<dd>he pointerenter event fires when a pointing device is moved into the hit test boundaries of an element or one of its descendants, including as a result of a pointerdown event from a device that does not support hover (see pointerdown).</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGSVGElement/checkIntersection">SVGSVGElement.checkIntersection()</a></dt>
+	<dd>Returns true if the rendered content of the given element intersects the supplied rectangle.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGSVGElement/checkEnclosure">SVGSVGElement.checkEnclosure()</a></dt>
+	<dd>Returns true if the rendered content of the given element is entirely contained within the supplied rectangle.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGSVGElement/deselectAll">SVGSVGElement.deselectAll()</a></dt>
+	<dd>Unselects any selected objects, including any selections of text strings and type-in bars.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGTransformList/consolidate">SVGTransformList: consolidate()</a></dt>
+	<dd>Consolidates the list of separate SVGTransform objects by multiplying the equivalent transformation matrices together to result in a single transformation matrix. Useful to read out the position of the auxiliary pointer.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/pathLength"><tt>pathLength</tt> Attribute</a></dt>
+	<dd>The pathLength attribute lets authors specify a total length for the path, in user units.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGGeometryElement/getPointAtLength">SVGGeometryElement: getPointAtLength()</a></dt>
+	<dd>Returns the point at a given distance along the path.</dd>
+<dt><a href="https://developer.mozilla.org/en-US/docs/Web/API/SVGGeometryElement/getTotalLength">SVGGeometryElement: getTotalLength()</a></dt>
+	<dd>Returns the user agent's computed value for the total length of the path in user units.</dd>
+</dl>
+
+<h3>Articles</h3>
+
+<dl>
+<dt><a href="https://www.smashingmagazine.com/2018/05/svg-interaction-pointer-events-property/">Managing SVG Interaction With The Pointer Events Property</a> by Tiffany Brown, Smashing Magazine</dt>
+<dt><a href="https://stackoverflow.com/questions/63439727/efficient-way-to-find-point-on-a-svg-stroke-closest-to-the-current-mouse-point">Efficient way to find point on a svg stroke closest to the current mouse point?</a></dt>
+	<dd>By Alex on Stackoverflow.</dd>
+
+</dl>
+
+<!--h2--References--></div>
+
+</body></html>

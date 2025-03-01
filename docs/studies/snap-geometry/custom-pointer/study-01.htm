@@ -1,0 +1,73 @@
+﻿ <!DOCTYPE html>
+<html lang="en-US"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="template-info" file-name="empty.htm" version="2024-09-15" editor="USP" />
+<meta name="author" content="USP" />
+<meta name="creation-date" content="2025-02-27" />
+<meta name="editor" content="USP" />
+<meta name="change-date" content="2025-02-27" />
+<meta name="version" content="1" />
+<meta name="sectionTitle" content="../title.svg" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="all" />
+<!--
+<link rel="stylesheet" href="/inc/webcat/page-structure/demo-page.css" />
+<cript type="module" src="/inc/webcat/page-structure/demo-page.js" ></cript>
+-->
+
+<style id="stylesForContainerDocument">
+div#messageBox { border : 1px solid silver }
+</style>
+
+<style id="stylesForSVGDocument">
+#theDocument { border : 1px solid silver }
+</style>
+
+<meta name="categories" content="Projext > SVG Editor > Snap to Geometry" />
+<meta name="tags" content="project, SVG, editor, create, element, study, pointer, custom" />
+<title>Study 1: Custom Pointer (Projects > SVG Editor > Studies > Custom Pointer)</title>
+<meta name="description" content="Demonstrates how to use a custom pointer" />
+
+</head><body>
+
+<div class="hide-if-hosted">
+<h1>Study 1: Custom Pointer</h1><p class="subtitle">Snapping to center, circumference and axis points</p>
+</div>
+
+<svg id="theDocument" class="snap-stroke" viewBox="-170,-150,300,300" width="300" height="300" style="touch-action: none; cursor: url('custom-pointer.svg') 25 25, auto;">
+
+<circle cx="25" cy="15" r="25" id="c-001" stroke="silver" stroke-width="1" fill="none" ></circle>
+<circle class="snap-overlay circle" cx="25" cy="15" r="25" stroke="transparent" stroke-width="15" fill="none" ></circle>
+</svg>
+
+<script type="module">
+// - - - Snap to circle
+for ( const o of theDocument.querySelectorAll( ".snap-overlay.circle" )) {
+	o.addEventListener( "pointerenter" , evt => {
+		theDocument.addEventListener( "pointermove" , trackCircleLine );
+		} ) ;
+	o.addEventListener( "pointerleave" , evt => {
+		// Track pointer again
+		theDocument.removeEventListener( "pointermove" , trackCircleLine );
+		theDocument.style.cursor = "url('custom-pointer.svg') 25 25, auto" ;
+		} ) ;
+	}
+let lastDX, lastDY ;
+function trackCircleLine ( evt ) {
+	let pointer = theDocument.createSVGPoint( );
+	pointer.x = evt.clientX ;
+	pointer.y = evt.clientY ;
+	pointer = pointer.matrixTransform( theDocument.getScreenCTM( ).inverse());
+	const cx = evt.target.cx.baseVal.value ;
+	const cy = evt.target.cy.baseVal.value ;
+	let dx =  pointer.x - cx ;
+	let dy =  pointer.y - cy ;
+	const f = evt.target.r.baseVal.value / Math.sqrt( dx ** 2 + dy ** 2 );
+	const dx2 = Math.round( dx - dx * f );
+	const dy2 = Math.round( dy - dy * f );
+	if ( dx2 === lastDX && dy2 === lastDY ) return ;
+	console.debug( dx2, dy2 );
+	theDocument.style.cursor = `url('custom-pointer.svg') ${lastDX = 25 + dx2} ${lastDY = 25 + dy2}, auto`;
+	}	
+</script>
+</body></html>
